@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>prot</title>
+</head>
+<body>
+    <h2>Stationskoordinaten, <br> Format ohne Punkte: xxxxxx;</h2>
+    <form action="{% url 'check' %}" method="post">
+        {% csrf_token %}
+        <label for="lat">Breitengrad:</label>
+        <input type="text" id="lat" name="lat" required><br><br>
+
+        <label for="lon">Längengrad:</label>
+        <input type="text" id="lon" name="lon" required><br><br>
+
+        <button type="submit">Überprüfen</button>
+    </form>
+
+    {% if result %}
+        <h3>{{ result }}</h3>
+        <form action="{% url 'result' %}" method="post">
+            {% csrf_token %}
+            <label for="lat">Stations-id:</label>
+            <input type="text" id="station_id" name="station_id" required><br><br>
+            <button type="submit">Anzeigen</button>
+        </form>
+    {% endif %}
+</body>
+</html>

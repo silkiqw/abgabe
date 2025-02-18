@@ -1,0 +1,90 @@
+name: Django CI/CD Pipeline
+
+# Trigger: Pipeline wird bei jedem Push in den main-Branch oder bei einem Pull Request gestartet
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+# Jobs definieren
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Schritt 1: Repository auschecken
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Schritt 2: Python-Umgebung einrichten
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"  # Passe die Python-Version an euer Projekt an
+
+      # Schritt 3: Installiere Abhängigkeiten
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # Schritt 4: Führe Tests aus
+      - name: Run Tests
+        run: |
+          python manage.py test
+
+  build:
+    runs-on: ubuntu-latest
+    needs: test  # Build wird nur ausgeführt, wenn Tests erfolgreich sind
+
+    steps:
+      # Schritt 1: Repository auschecken
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Schritt 2: Docker-Login bei Docker Hub
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      # Schritt 3: Docker-Image bauen
+      - name: Build Docker Image
+        run: docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/django-wetter-app:latest .
+
+      # Schritt 4: Docker-Image auf Docker Hub pushen
+      - name: Push Docker Image
+        run: docker push ${{ secrets.DOCKER_HUB_USERNAME }}/django-wetter-app:latest
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build  # Deploy wird nur ausgeführt, wenn Build erfolgreich ist
+
+    steps:
+      # Schritt 1: Repository auschecken
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Schritt 2: Docker-Login bei Docker Hub
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      # Schritt 3: Docker-Image herunterladen
+      - name: Pull Docker Image
+        run: docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/django-wetter-app:latest
+
+      # Schritt 4: Docker-Container ausführen (mit Umgebungsvariablen)
+      - name: Run Docker Container
+        run: |
+          docker run -d \
+            -p 8000:8000 \
+            -e DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }} \
+            -e WEATHER_API_KEY=${{ secrets.WEATHER_API_KEY }} \
+            ${{ secrets.DOCKER_HUB_USERNAME }}/django-wetter-app:latest 
