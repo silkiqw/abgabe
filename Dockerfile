@@ -1,4 +1,4 @@
-# Basis-Image mit Python 3.9
+# Basis-Image mit Python 3.11
 FROM python:3.11
 
 # Arbeitsverzeichnis im Container setzen
