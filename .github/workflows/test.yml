@@ -27,4 +27,4 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run Pytest
-        run: pytest --disable-warnings
+        run: pytest myApp/test.py --disable-warnings
