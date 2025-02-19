@@ -23,7 +23,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.9"  # Passe die Python-Version an euer Projekt an
+          python-version: "3.11"  # Passe die Python-Version an euer Projekt an
 
       # Schritt 3: Installiere Abhängigkeiten
       - name: Install Dependencies
