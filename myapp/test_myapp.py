@@ -53,8 +53,4 @@ def test_fetch_data_fail(mock_get):
 from django.test import TestCase
 
 
-# Create your tests here.
-def test_dummy():
-    assert True
-def test_example():
-    assert 1 + 1 == 2 
+
