@@ -45,20 +45,21 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      # Schritt 2: Docker-Login bei Docker Hub
-      - name: Login to Docker Hub
+      # Schritt 2: Docker-Login bei GitHub Container Registry
+      - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
         with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       # Schritt 3: Docker-Image bauen
       - name: Build Docker Image
-        run: docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/django-wetter-app:latest .
+        run: docker build -t ghcr.io/${{ github.repository_owner }}/django-wetter-app:latest .
 
-      # Schritt 4: Docker-Image auf Docker Hub pushen
+      # Schritt 4: Docker-Image auf GitHub Container Registry pushen
       - name: Push Docker Image
-        run: docker push ${{ secrets.DOCKER_HUB_USERNAME }}/django-wetter-app:latest
+        run: docker push ghcr.io/${{ github.repository_owner }}/django-wetter-app:latest
 
   deploy:
     runs-on: ubuntu-latest
@@ -69,16 +70,17 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      # Schritt 2: Docker-Login bei Docker Hub
-      - name: Login to Docker Hub
+      # Schritt 2: Docker-Login bei GitHub Container Registry
+      - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
         with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       # Schritt 3: Docker-Image herunterladen
       - name: Pull Docker Image
-        run: docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/django-wetter-app:latest
+        run: docker pull ghcr.io/${{ github.repository_owner }}/django-wetter-app:latest
 
       # Schritt 4: Docker-Container ausführen (mit Umgebungsvariablen)
       - name: Run Docker Container
@@ -87,4 +89,4 @@ jobs:
             -p 8000:8000 \
             -e DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }} \
             -e WEATHER_API_KEY=${{ secrets.WEATHER_API_KEY }} \
-            ${{ secrets.DOCKER_HUB_USERNAME }}/django-wetter-app:latest 
+            ghcr.io/${{ github.repository_owner }}/django-wetter-app:latest
