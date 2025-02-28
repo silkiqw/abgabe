@@ -3,29 +3,210 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>prot</title>
+    <title>Wetterstationen</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f5f7fa;
+        }
+        .nav-tabs .nav-link {
+            color: #333;
+            border: none;
+            padding: 10px 15px;
+        }
+        .nav-tabs .nav-link.active {
+            font-weight: bold;
+            border-bottom: 2px solid #333;
+            background-color: transparent;
+        }
+        .search-results .list-group-item {
+            border-left: none;
+            border-right: none;
+            padding: 15px;
+        }
+        .search-button {
+            background-color: #dc3545;
+            border-color: #dc3545;
+        }
+        .search-button:hover {
+            background-color: #c82333;
+            border-color: #bd2130;
+        }
+        .result-item {
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .result-item:hover {
+            background-color: #f8f9fa;
+        }
+        .weather-station {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .search-form-row {
+            align-items: flex-end;
+        }
+        .search-results {
+            display: none;
+        }
+        .radius-input {
+            margin-bottom: 0;
+        }
+        
+        /* Verbesserte Slider-Styles */
+        .custom-range-container {
+            position: relative;
+            height: 30px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .custom-range-track {
+            position: absolute;
+            width: 100%;
+            height: 6px;
+            background-color: #e9ecef;
+            border-radius: 3px;
+        }
+        
+        .custom-range-fill {
+            position: absolute;
+            height: 6px;
+            background-color: #dc3545;
+            border-radius: 3px;
+            left: 0;
+        }
+        
+        .custom-range {
+            position: relative;
+            width: 100%;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 6px;
+            background: transparent;
+            z-index: 10;
+        }
+        
+        .custom-range::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #dc3545;
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 0 2px rgba(0,0,0,0.5);
+        }
+        
+        .custom-range::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #dc3545;
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 0 2px rgba(0,0,0,0.5);
+        }
+    </style>
 </head>
 <body>
-    <h2>Stationskoordinaten, <br> Format ohne Punkte: xxxxxx;</h2>
-    <form action="{% url 'check' %}" method="post">
-        {% csrf_token %}
-        <label for="lat">Breitengrad:</label>
-        <input type="text" id="lat" name="lat" required><br><br>
+    <div class="container-fluid p-0">
+        <!-- Navigation Tabs -->
+        <ul class="nav nav-tabs px-3 border-bottom">
+            <li class="nav-item">
+                <a class="nav-link active" href="#">DatenInput</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">Wetterstationdetails</a>
+            </li>
+        </ul>
+        
+        <div class="container py-4">
+            <!-- Main Content -->
+            <div class="row mb-4 align-items-center">
+                <div class="col-md-6">
+                    <h2 class="mb-0">Dateneingabe</h2>
+                </div>
+                <div class="col-md-6 text-end">
+                    <button type="button" class="btn search-button text-white" id="searchButton">Wetterstationen suchen</button>
+                </div>
+            </div>
+            
+            <!-- Search Form -->
+            <div class="row search-form-row mb-4">
+                <div class="col-md-2 mb-3">
+                    <label for="longitude" class="form-label">Längengrad eingeben</label>
+                    <input type="number" step="0.000001" class="form-control" id="longitude">
+                </div>
+                <div class="col-md-2 mb-3">
+                    <label for="latitude" class="form-label">Breitengrad eingeben</label>
+                    <input type="number" step="0.000001" class="form-control" id="latitude">
+                </div>
+                <div class="col-md-2 mb-3">
+                    <label for="dateFrom" class="form-label">Von</label>
+                    <input type="date" class="form-control" id="dateFrom">
+                </div>
+                <div class="col-md-2 mb-3">
+                    <label for="dateTo" class="form-label">Bis</label>
+                    <input type="date" class="form-control" id="dateTo">
+                </div>
+                <div class="col-md-4 mb-3 radius-input">
+                    <label for="searchRadius" class="form-label">Suchradius eingeben</label>
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1 me-3">
+                            <div class="custom-range-container">
+                                <div class="custom-range-track"></div>
+                                <div class="custom-range-fill" id="rangeFill" style="width: 17%;"></div>
+                                <input type="range" class="custom-range" id="searchRadius" min="0" max="100" value="17">
+                            </div>
+                        </div>
+                        <div class="slider-value">
+                            <span>Suchradius: </span><span id="radiusValue">17</span>km
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Search Results -->
+            <h3 class="mb-3">Suchergebnisse</h3>
+            <div class="search-results" id="resultsContainer">
+                <ul class="list-group">
+                    <li class="list-group-item result-item" onclick="window.location.href='result.html'">
+                        <div class="weather-station">Wetterstation München</div>
+                    </li>
+                    <li class="list-group-item result-item" onclick="window.location.href='result.html'">
+                        <div class="weather-station">Wetterstation München</div>
+                    </li>
+                    <li class="list-group-item result-item" onclick="window.location.href='result.html'">
+                        <div class="weather-station">Wetterstation München</div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
 
-        <label for="lon">Längengrad:</label>
-        <input type="text" id="lon" name="lon" required><br><br>
-
-        <button type="submit">Überprüfen</button>
-    </form>
-
-    {% if result %}
-        <h3>{{ result }}</h3>
-        <form action="{% url 'result' %}" method="post">
-            {% csrf_token %}
-            <label for="lat">Stations-id:</label>
-            <input type="text" id="station_id" name="station_id" required><br><br>
-            <button type="submit">Anzeigen</button>
-        </form>
-    {% endif %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Update radius value display and fill as slider changes
+        const slider = document.getElementById('searchRadius');
+        const radiusValue = document.getElementById('radiusValue');
+        const rangeFill = document.getElementById('rangeFill');
+        const searchButton = document.getElementById('searchButton');
+        const resultsContainer = document.getElementById('resultsContainer');
+        
+        // Set initial fill
+        rangeFill.style.width = slider.value + '%';
+        
+        slider.addEventListener('input', function() {
+            radiusValue.textContent = this.value;
+            rangeFill.style.width = this.value + '%';
+        });
+        
+        // Show results when search button is clicked
+        searchButton.addEventListener('click', function() {
+            resultsContainer.style.display = 'block';
+        });
+    </script>
 </body>
 </html>
