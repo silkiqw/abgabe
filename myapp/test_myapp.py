@@ -1,6 +1,7 @@
 import pytest
 import time
 import subprocess
+import re
 import os
 import requests
 from django.test import TestCase
