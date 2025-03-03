@@ -74,6 +74,7 @@ def test_docker_resource_limits():
         # Container stoppen und entfernen
         subprocess.run(["docker", "stop", container_name], check=False)
         subprocess.run(["docker", "rm", container_name], check=False)
+    assert False, f"DEBUG: docker stats output: {output}"
 
 @pytest.mark.parametrize("lat1, lon1, lat2, lon2, expected", [
     (500000, 800000, 500000, 800000, 0.0),  # Gleicher Punkt → Distanz = 0
