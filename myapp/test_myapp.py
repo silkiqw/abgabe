@@ -11,7 +11,7 @@ from myapp.views import distance, is_within_50km, check, fetch_data
 
 def test_docker_resource_limits():
     container_name = "test_django_wetter_app"
-    image_name = "ghcr.io/YOUR_GITHUB_USERNAME/django-wetter-app:latest"
+    image_name = "ghcr.io/silkiqw/django-wetter-app:latest"
 
     try:
         # Starte den Container
