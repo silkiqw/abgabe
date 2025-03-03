@@ -1,4 +1,6 @@
 import pytest
+import time
+import subprocess
 import os
 import requests
 from django.test import TestCase
@@ -6,6 +8,48 @@ from unittest.mock import patch, mock_open
 from django.conf import settings
 from django.test import RequestFactory
 from myapp.views import distance, is_within_50km, check, fetch_data
+
+def test_docker_resource_limits():
+    container_name = "test_django_wetter_app"
+    image_name = "ghcr.io/YOUR_GITHUB_USERNAME/django-wetter-app:latest"
+
+    try:
+        # Starte den Container
+        subprocess.run(
+            [
+                "docker", "run", "-d", "--name", container_name,
+                "--memory", "1g", "--cpus", "2",
+                image_name
+            ],
+            check=True
+        )
+
+        # Warte einige Sekunden, damit der Container sich stabilisiert
+        time.sleep(10)
+
+        # Führe docker stats aus, um Ressourcenverbrauch zu prüfen
+        result = subprocess.run(
+            ["docker", "stats", "--no-stream", "--format", "{{.MemUsage}} {{.CPUPerc}}", container_name],
+            capture_output=True, text=True, check=True
+        )
+
+        output = result.stdout.strip()
+        mem_usage, cpu_perc = output.split()
+
+        # CPU überprüfen (ohne %-Zeichen)
+        cpu_usage = float(cpu_perc.replace("%", ""))
+        assert cpu_usage <= 200.0, f"CPU-Verbrauch überschreitet 2 vCPUs! (Aktuell: {cpu_usage}%)"
+
+        # RAM überprüfen (Konvertierung in MB/GB)
+        mem_value, mem_unit = mem_usage.split(" ")
+        mem_used = float(mem_value) * 1024 if "GiB" in mem_unit else float(mem_value)
+
+        assert mem_used < 1024, f"RAM-Verbrauch überschreitet 1 GB! (Aktuell: {mem_used} MiB)"
+
+    finally:
+        # Container stoppen und entfernen
+        subprocess.run(["docker", "stop", container_name], check=False)
+        subprocess.run(["docker", "rm", container_name], check=False)
 
 @pytest.mark.parametrize("lat1, lon1, lat2, lon2, expected", [
     (500000, 800000, 500000, 800000, 0.0),  # Gleicher Punkt → Distanz = 0
