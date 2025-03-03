@@ -14,7 +14,7 @@ def test_docker_resource_limits():
     image_name = "ghcr.io/silkiqw/django-wetter-app:latest"
 
     try:
-        # Starte den Container
+        # Starte den Container mit den Limits
         subprocess.run(
             [
                 "docker", "run", "-d", "--name", container_name,
@@ -27,14 +27,24 @@ def test_docker_resource_limits():
         # Warte einige Sekunden, damit der Container sich stabilisiert
         time.sleep(10)
 
-        # Führe docker stats aus, um Ressourcenverbrauch zu prüfen
+        # Führe docker stats aus
         result = subprocess.run(
             ["docker", "stats", "--no-stream", "--format", "{{.MemUsage}} {{.CPUPerc}}", container_name],
-            capture_output=True, text=True, check=True
+            capture_output=True, text=True, check=False  # `check=False`, damit Fehler behandelt werden können
         )
 
         output = result.stdout.strip()
-        mem_usage, cpu_perc = output.split()
+        print(f"DEBUG: docker stats output: {output}")  # Debugging
+
+        # Falls `output` leer ist, Fehler werfen
+        if not output:
+            raise RuntimeError("Fehler: `docker stats` hat keine Werte zurückgegeben!")
+
+        values = output.split()
+        if len(values) < 2:
+            raise ValueError(f"Unerwartete `docker stats` Ausgabe: {output}")
+
+        mem_usage, cpu_perc = values[:2]  # Nimmt nur die ersten beiden Werte
 
         # CPU überprüfen (ohne %-Zeichen)
         cpu_usage = float(cpu_perc.replace("%", ""))
