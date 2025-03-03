@@ -41,11 +41,16 @@ def test_docker_resource_limits():
             raise RuntimeError("Fehler: `docker stats` hat keine Werte zurückgegeben!")
 
         values = output.split()
-        if len(values) < 2:
+        print(f"DEBUG: docker stats values: {values}")
+
+        if len(values) < 4:
             raise ValueError(f"Unerwartete `docker stats` Ausgabe: {output}")
 
-        mem_usage, cpu_perc = values[:2]
-        print(f"DEBUG: docker stats values: {values}")
+        # Speicherverbrauch extrahieren (immer erstes Element)
+        mem_usage = values[0]
+
+        # CPU-Auslastung ist das letzte Element
+        cpu_perc = values[-1]
 
         # Prüfen, ob `cpu_perc` tatsächlich eine Zahl ist
         if not cpu_perc.replace(".", "").replace("%", "").isdigit():
