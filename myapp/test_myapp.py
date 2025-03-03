@@ -30,7 +30,7 @@ def test_docker_resource_limits():
         # Führe docker stats aus
         result = subprocess.run(
             ["docker", "stats", "--no-stream", "--format", "{{.MemUsage}} {{.CPUPerc}}", container_name],
-            capture_output=True, text=True, check=False  # `check=False`, damit Fehler behandelt werden können
+            capture_output=True, text=True, check=False
         )
 
         output = result.stdout.strip()
@@ -44,15 +44,23 @@ def test_docker_resource_limits():
         if len(values) < 2:
             raise ValueError(f"Unerwartete `docker stats` Ausgabe: {output}")
 
-        mem_usage, cpu_perc = values[:2]  # Nimmt nur die ersten beiden Werte
+        mem_usage, cpu_perc = values[:2]
+        print(f"DEBUG: docker stats values: {values}")
 
-        # CPU überprüfen (ohne %-Zeichen)
+        # Prüfen, ob `cpu_perc` tatsächlich eine Zahl ist
+        if not cpu_perc.replace(".", "").replace("%", "").isdigit():
+            raise ValueError(f"CPU-Wert ungültig: {cpu_perc} (Output: {output})")
+
         cpu_usage = float(cpu_perc.replace("%", ""))
         assert cpu_usage <= 200.0, f"CPU-Verbrauch überschreitet 2 vCPUs! (Aktuell: {cpu_usage}%)"
 
-        # RAM überprüfen (Konvertierung in MB/GB)
-        mem_value, mem_unit = mem_usage.split(" ")
-        mem_used = float(mem_value) * 1024 if "GiB" in mem_unit else float(mem_value)
+        # RAM-Wert mit Regex extrahieren (z. B. "512MiB" oder "1.2GiB")
+        match = re.match(r"([\d.]+)(MiB|GiB)", mem_usage)
+        if not match:
+            raise ValueError(f"RAM-Wert ungültig: {mem_usage} (Output: {output})")
+
+        mem_value, mem_unit = match.groups()
+        mem_used = float(mem_value) * 1024 if mem_unit == "GiB" else float(mem_value)
 
         assert mem_used < 1024, f"RAM-Verbrauch überschreitet 1 GB! (Aktuell: {mem_used} MiB)"
 
