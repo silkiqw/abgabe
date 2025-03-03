@@ -150,3 +150,86 @@ def test_result_view(mock_fetch_data, sample_ghcn_data):
     assert "2015" in content
     assert "2016" in content
 
+# Beispiel-GHCN-Daten für die Südhalbkugel (z.B. Buenos Aires, Argentinien)
+@pytest.fixture
+def sample_ghcn_data_southern():
+    # Gleiche Daten wie im vorhandenen Test, aber für eine südliche Station
+    return """
+    ARW000874082015TMAX  89  6 122  6 189  6 245  6 267  6 278  6 256  6 200  6 156  6 100  6  89  6  78  6
+    ARW000874082015TMIN   0  6  33  6  89  6 150  6 183  6 189  6 167  6 111  6  67  6  11  6 -22  6 -33  6
+    ARW000874082016TMAX  94  6 128  6 194  6 250  6 272  6 283  6 261  6 206  6 161  6 106  6  94  6  83  6
+    ARW000874082016TMIN   6  6  39  6  94  6 156  6 189  6 194  6 172  6 117  6  72  6  17  6 -17  6 -28  6
+    """
+
+# Test für die Erkennung der Südhalbkugel basierend auf Koordinaten
+@pytest.mark.parametrize("lat, lon, expected", [
+    (40.7128, -74.0060, False),  # New York, Nordhalbkugel
+    (-34.6037, -58.3816, True),  # Buenos Aires, Südhalbkugel
+    (0.0, 0.0, False),           # Äquator, gilt als Nordhalbkugel
+    (-0.0001, 0.0, True)         # Knapp südlich des Äquators
+])
+def test_is_southern_hemisphere(lat, lon, expected):
+    # Diese Funktion müssen wir noch implementieren
+    from myapp.views import is_southern_hemisphere
+    assert is_southern_hemisphere(lat, lon) == expected
+
+# Test für die Berechnung der Jahreszeiten auf der Südhalbkugel
+def test_calculate_seasonal_averages_southern(sample_ghcn_data_southern):
+    # Diese Funktion müssen wir noch implementieren
+    from myapp.views import parse_ghcn_data, calculate_seasonal_averages
+    
+    # Latitude für Buenos Aires (Südhalbkugel)
+    station_latitude = -34.6037
+    
+    parsed_data = parse_ghcn_data(sample_ghcn_data_southern)
+    seasonal_averages = calculate_seasonal_averages(parsed_data, station_latitude)
+    
+    # Prüfen der Jahreszeitenwerte für 2015
+    assert 2015 in seasonal_averages
+    
+    # Südhalbkugel Jahreszeiten:
+    # Frühling (September-November)
+    assert pytest.approx(seasonal_averages[2015]['spring_tmax'], rel=1e-2) == 18.53
+    assert pytest.approx(seasonal_averages[2015]['spring_tmin'], rel=1e-2) == 9.07
+    
+    # Sommer (Dezember-Februar)
+    assert pytest.approx(seasonal_averages[2015]['summer_tmax'], rel=1e-2) == 8.53
+    assert pytest.approx(seasonal_averages[2015]['summer_tmin'], rel=1e-2) == -1.83
+    
+    # Herbst (März-Mai)
+    assert pytest.approx(seasonal_averages[2015]['autumn_tmax'], rel=1e-2) == 15.2
+    assert pytest.approx(seasonal_averages[2015]['autumn_tmin'], rel=1e-2) == 6.3
+    
+    # Winter (Juni-August)
+    assert pytest.approx(seasonal_averages[2015]['winter_tmax'], rel=1e-2) == 26.7
+    assert pytest.approx(seasonal_averages[2015]['winter_tmin'], rel=1e-2) == 17.97
+
+# Integration Test: Test der verbesserten result-Funktion mit Berücksichtigung der Hemisphäre
+@patch("myapp.views.fetch_data")
+@patch("myapp.views.get_station_coordinates")
+def test_result_view_with_hemisphere(mock_get_coords, mock_fetch_data, sample_ghcn_data_southern):
+    # Mock-Daten für eine südliche Station
+    mock_fetch_data.return_value = sample_ghcn_data_southern
+    
+    # Buenos Aires Koordinaten
+    mock_get_coords.return_value = (-34.6037, -58.3816)
+    
+    # Request simulieren
+    factory = RequestFactory()
+    request = factory.post("/result", {"station_id": "ARW00087408"})
+    
+    # Antwort der View-Funktion erhalten
+    from myapp.views import result
+    response = result(request)
+    
+    # Prüfen, ob die Antwort korrekt ist
+    assert response.status_code == 200
+    
+    content = str(response.content)
+    
+    # Prüfen ob die richtigen Jahreszeiten für die Südhalbkugel verwendet wurden
+    assert "Südhalbkugel" in content
+    
+    # Hier könnten weitere spezifische Prüfungen für die Ausgabe erfolgen
+    # z.B. ob der Sommer in Buenos Aires tatsächlich im Dezember-Februar liegt
+
