@@ -98,16 +98,31 @@ def test_distance(lat1, lon1, lat2, lon2, expected):
 ])
 
 
-@patch("builtins.open", new_callable=mock_open, read_data="id,lat,lon,name\n1,500000,800000,TestStation\n")
+@patch("builtins.open", new_callable=mock_open, read_data="id,lat,lon,type,name\n1,500000,800000,X,TestStation\n")
 @patch("os.path.join", return_value="dummy_path.csv")
-def test_check(mock_join, mock_file):
+@patch("django.core.cache.cache.set")
+def test_check(mock_cache_set, mock_join, mock_file):
     factory = RequestFactory()
-    request = factory.post("/check", {"lat": "500000", "lon": "800000"})
+    request = factory.post("/check", {
+        "lat": "500000", 
+        "lon": "800000",
+        "searchRadius": "50",  # Radius hinzugefügt
+        "dateFrom": "2020-01-01",  # Start-Datum hinzugefügt
+        "dateTo": "2022-01-01"     # End-Datum hinzugefügt
+    })
     
-    response = check(request)
+    # Mock für is_within_rad-Funktion, falls nötig
+    with patch("path.to.is_within_rad", return_value=True):
+        response = check(request)
     
     assert response.status_code == 200
     assert b"TestStation" in response.content  # Die Station sollte in der Antwort sein
+    
+    # Prüfen ob Jahre korrekt berechnet wurden
+    mock_cache_set.assert_called_once()
+    args, _ = mock_cache_set.call_args
+    assert args[0] == "years"
+    assert args[1] == [2020, 2021, 2022]  # Sollte alle Jahre zwischen Start und Ende enthalten
 
 @patch("requests.get")
 def test_fetch_data(mock_get):
