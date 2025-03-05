@@ -92,7 +92,7 @@ def test_docker_resource_limits():
 ])
 def test_distance(lat1, lon1, lat2, lon2, expected):
     result = distance(lat1, lon1, lat2, lon2)
-    assert pytest.approx(result, rel=1e-2) == expected  # Toleranz ±1%
+    assert pytest.approx(expected, rel=1e-2) == result
 
 @pytest.mark.parametrize("lat1, lon1, lat2, lon2, expected", [
     (500000, 800000, 500100, 800000, True),   # 11 km → innerhalb 50 km
