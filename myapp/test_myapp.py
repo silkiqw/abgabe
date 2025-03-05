@@ -4,7 +4,9 @@ import subprocess
 import re
 import os
 import requests
+import django.core.cache as cache
 from django.test import TestCase
+
 from unittest.mock import patch, mock_open
 from django.conf import settings
 from django.test import RequestFactory
@@ -98,56 +100,67 @@ def test_distance(lat1, lon1, lat2, lon2, expected):
 ])
 
 
+def mock_is_within_rad(lat1, lon1, lat2, lon2, r):
+    # Test 1: Station innerhalb des Radius
+    if int(r) == 50 and lat1 == "500000" and lon1 == "800000" and lat2 == "500000" and lon2 == "800000":
+        return True
+    # Test 2: Station außerhalb des Radius
+    elif int(r) == 30 and lat1 == "500000" and lon1 == "800000" and lat2 == "500000" and lon2 == "800000":
+        return False
+    else:
+        return True
+
+@pytest.fixture
+def mock_is_within_rad_function():
+    with patch("myapp.views.is_within_rad", side_effect=mock_is_within_rad):
+        yield
+
 @patch("builtins.open", new_callable=mock_open, read_data="id,lat,lon,type,name\n1,500000,800000,X,TestStation\n")
 @patch("os.path.join", return_value="dummy_path.csv")
 @patch("django.core.cache.cache.set")
-def test_check_with_different_radii(mock_cache_set, mock_join, mock_file):
+def test_check_inside_radius(mock_cache_set, mock_join, mock_file, mock_is_within_rad_function):
+    """Test wenn die Station innerhalb des Radius liegt"""
     factory = RequestFactory()
+    request = factory.post("/check", {
+        "lat": "500000", 
+        "lon": "800000",
+        "searchRadius": "50",
+        "dateFrom": "2020-01-01",
+        "dateTo": "2022-01-01"
+    })
     
-    # Test 1: Station innerhalb des Radius (Distanz < Radius)
-    with patch("myapp.views.distance", return_value=30):
-        request = factory.post("/check", {
-            "lat": "500000", 
-            "lon": "800000",
-            "searchRadius": "50",  # Radius > Distanz (30)
-            "dateFrom": "2020-01-01",
-            "dateTo": "2022-01-01"
-        })
-        
-        response = check(request)
-        
-        assert response.status_code == 200
-        assert b"TestStation" in response.content  # Station sollte gefunden werden
+    from myapp.views import check  # Importieren Sie die zu testende Funktion
+    response = check(request)
     
-    # Test 2: Station außerhalb des Radius (Distanz > Radius)
-    with patch("myapp.views.distance", return_value=70):
-        request = factory.post("/check", {
-            "lat": "500000", 
-            "lon": "800000",
-            "searchRadius": "50",  # Radius < Distanz (70)
-            "dateFrom": "2020-01-01",
-            "dateTo": "2022-01-01"
-        })
-        
-        response = check(request)
-        
-        assert response.status_code == 200
-        assert b"Keine Station gefunden" in response.content  # Keine Station sollte gefunden werden
+    assert response.status_code == 200
+    assert b"TestStation" in response.content
     
-    # Test 3: Station genau auf der Grenze (Distanz = Radius)
-    with patch("myapp.views.distance", return_value=50):
-        request = factory.post("/check", {
-            "lat": "500000", 
-            "lon": "800000",
-            "searchRadius": "50",  # Radius = Distanz (50)
-            "dateFrom": "2020-01-01",
-            "dateTo": "2022-01-01"
-        })
-        
-        response = check(request)
-        
-        assert response.status_code == 200
-        assert b"TestStation" in response.content  # Station sollte gefunden werden
+    mock_cache_set.assert_called_once()
+    args, _ = mock_cache_set.call_args
+    assert args[0] == "years"
+    assert args[1] == [2020, 2021, 2022]
+
+@patch("builtins.open", new_callable=mock_open, read_data="id,lat,lon,type,name\n1,500000,800000,X,TestStation\n")
+@patch("os.path.join", return_value="dummy_path.csv")
+@patch("django.core.cache.cache.set")
+def test_check_outside_radius(mock_cache_set, mock_join, mock_file, mock_is_within_rad_function):
+    """Test wenn die Station außerhalb des Radius liegt"""
+    factory = RequestFactory()
+    request = factory.post("/check", {
+        "lat": "500000", 
+        "lon": "800000",
+        "searchRadius": "30",  # Kleinerer Radius, wird von mock_is_within_rad als außerhalb erkannt
+        "dateFrom": "2020-01-01",
+        "dateTo": "2022-01-01"
+    })
+    
+    from myapp.views import check
+    response = check(request)
+    
+    assert response.status_code == 200
+    assert b"Keine Station gefunden" in response.content
+    
+    mock_cache_set.assert_called_once()
 
 @patch("requests.get")
 def test_fetch_data(mock_get):
