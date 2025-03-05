@@ -3,16 +3,368 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>prot</title>
+    <title>Wetterstationdetails</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f5f7fa;
+        }
+        .nav-tabs .nav-link {
+            color: #333;
+            border: none;
+            padding: 10px 15px;
+        }
+        .nav-tabs .nav-link.active {
+            font-weight: bold;
+            border-bottom: 2px solid #333;
+            background-color: transparent;
+        }
+        .table th {
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .table-container {
+            overflow-x: auto;
+            overflow-y: auto;
+            max-height: 300px;
+        }
+        .footer-btn {
+            background-color: #dc3545;
+            color: white;
+            padding: 12px 0;
+            text-align: center;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+            display: block;
+            width: 100%;
+            border: none;
+        }
+        .footer-btn:hover {
+            background-color: #c82333;
+            color: white;
+        }
+        .sort-icon {
+            font-size: 0.8rem;
+            margin-left: 5px;
+        }
+        .chart-container {
+            height: 300px;
+            margin-bottom: 20px;
+        }
+        .series-toggle {
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        .series-controls {
+            margin-top: 15px;
+            padding: 10px;
+            border: 1px solid #eee;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+    </style>
 </head>
 <body>
-    <h2>erste 500 Zeichen</h2>
-
-
-    {% if result %}
-        <h3>{{ result }}</h3>
+    <div class="container-fluid p-0">
+        <!-- Navigation Tabs -->
+        <ul class="nav nav-tabs px-3 border-bottom">
+            <li class="nav-item">
+                <a class="nav-link" href="index.html">DatenInput</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link active" href="#">Wetterstationdetails</a>
+            </li>
+        </ul>
         
-        </form>
-    {% endif %}
+        <div class="container py-4">
+            <!-- Main Content -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h2 class="mb-4">Aufgerufene Wetterstation Details</h2>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <!-- Table -->
+                    <div class="table-container mb-4">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Jahr</th>
+                                    <th scope="col">Min</th>
+                                    <th scope="col">Max</th>
+                                    <th scope="col">Min Spring</th>
+                                    <th scope="col">Max Spring</th>
+                                    <th scope="col">Min Summer</th>
+                                    <th scope="col">Max Summer</th>
+                                    <th scope="col">Min Autumn</th>
+                                    <th scope="col">Max Autumn</th>
+                                    <th scope="col">Min Winter</th>
+                                    <th scope="col">Max Winter</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            
+                                {% for res in result %}               
+                                <tr>
+                                <td>{{res.0}}</td>
+                                <td>{{res.1}}</td>
+                                <td>{{res.2}}</td>
+                                <td>{{res.3}}</td>
+                                <td>{{res.4}}</td>
+                                <td>{{res.5}}</td>
+                                <td>{{res.6}}</td>
+                                <td>{{res.7}}</td>
+                                <td>{{res.8}}</td>
+                                <td>{{res.9}}</td>
+                                <td>{{res.10}}</td>
+                            </tr>
+                        {% endfor %}>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <!-- Chart -->
+                    <div class="chart-container">
+                        <canvas id="temperatureChart"></canvas>
+                    </div>
+                    
+                    <!-- Series Toggle Buttons -->
+                    <div class="series-controls">
+                        <h5>Daten Hervorheben</h5>
+                        <div class="d-flex flex-wrap mt-2">
+                            <button class="btn btn-outline-secondary btn-sm series-toggle" data-series="jahr">
+                                Jahr (Min/Max)
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm series-toggle" data-series="fruhling">
+                                Frühling (Min/Max)
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm series-toggle" data-series="sommer">
+                                Sommer (Min/Max)
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm series-toggle" data-series="herbst">
+                                Herbst (Min/Max)
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm series-toggle" data-series="winter">
+                                Winter (Min/Max)
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm series-toggle" data-series="alles">
+                                Alle anzeigen
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="mt-4">
+            <a href="index.html" class="footer-btn">Startseite</a>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+    <script>
+        // Chart.js Konfiguration
+        document.addEventListener('DOMContentLoaded', function() {
+            // Daten aus der Tabelle auslesen
+            const table = document.querySelector('.table');
+            const rows = Array.from(table.querySelectorAll('tbody tr'));
+            
+            const years = rows.map(row => row.cells[0].textContent);
+            const minTemp = rows.map(row => parseFloat(row.cells[1].textContent));
+            const maxTemp = rows.map(row => parseFloat(row.cells[2].textContent));
+            const minSpring = rows.map(row => parseFloat(row.cells[3].textContent));
+            const maxSpring = rows.map(row => parseFloat(row.cells[4].textContent));
+            const minSummer = rows.map(row => parseFloat(row.cells[5].textContent));
+            const maxSummer = rows.map(row => parseFloat(row.cells[6].textContent));
+            const minAutumn = rows.map(row => parseFloat(row.cells[7].textContent));
+            const maxAutumn = rows.map(row => parseFloat(row.cells[8].textContent));
+            const minWinter = rows.map(row => parseFloat(row.cells[9].textContent));
+            const maxWinter = rows.map(row => parseFloat(row.cells[10].textContent));
+            
+            const ctx = document.getElementById('temperatureChart').getContext('2d');
+            
+            const datasets = [
+                {
+                    label: 'Jahresminimum',
+                    data: minTemp,
+                    borderColor: 'rgb(0, 112, 192)',
+                    backgroundColor: 'rgba(0, 112, 192, 0.1)',
+                    tension: 0.4,
+                    fill: false,
+                    borderWidth: 2,
+                    group: 'jahr'
+                },
+                {
+                    label: 'Jahresmaximum',
+                    data: maxTemp,
+                    borderColor: 'rgb(255, 0, 0)',
+                    backgroundColor: 'rgba(255, 0, 0, 0.1)',
+                    tension: 0.4,
+                    fill: false,
+                    borderWidth: 2,
+                    group: 'jahr'
+                },
+                {
+                    label: 'Frühlingsminimum',
+                    data: minSpring,
+                    borderColor: 'rgb(0, 100, 0)',
+                    backgroundColor: 'rgba(0, 100, 0, 0.1)',
+                    tension: 0.4,
+                    fill: false,
+                    borderWidth: 2,
+                    group: 'fruhling'
+                },
+                {
+                    label: 'Frühlingsmaximum',
+                    data: maxSpring,
+                    borderColor: 'rgb(0, 255, 0)',
+                    backgroundColor: 'rgba(0, 255, 0, 0.1)',
+                    tension: 0.4,
+                    fill: false,
+                    borderWidth: 2,
+                    group: 'fruhling'
+                },
+                {
+                    label: 'Sommerminimum',
+                    data: minSummer,
+                    borderColor: 'rgb(204, 102, 0)',
+                    backgroundColor: 'rgba(204, 102, 0, 0.1)',
+                    tension: 0.4,
+                    fill: false,
+                    borderWidth: 2,
+                    group: 'sommer'
+                },
+                {
+                    label: 'Sommermaximum',
+                    data: maxSummer,
+                    borderColor: 'rgb(255, 165, 0)',
+                    backgroundColor: 'rgba(255, 165, 0, 0.1)',
+                    tension: 0.4,
+                    fill: false,
+                    borderWidth: 2,
+                    group: 'sommer'
+                },
+                {
+                    label: 'Herbstminimum',
+                    data: minAutumn,
+                    borderColor: 'rgb(101, 67, 33)',
+                    backgroundColor: 'rgba(101, 67, 33, 0.1)',
+                    tension: 0.4,
+                    fill: false,
+                    borderWidth: 2,
+                    group: 'herbst'
+                },
+                {
+                    label: 'Herbstmaximum',
+                    data: maxAutumn,
+                    borderColor: 'rgb(181, 101, 29)',
+                    backgroundColor: 'rgba(181, 101, 29, 0.1)',
+                    tension: 0.4,
+                    fill: false,
+                    borderWidth: 2,
+                    group: 'herbst'
+                },
+                {
+                    label: 'Winterminimum',
+                    data: minWinter,
+                    borderColor: 'rgb(64, 64, 64)',
+                    backgroundColor: 'rgba(64, 64, 64, 0.1)',
+                    tension: 0.4,
+                    fill: false,
+                    borderWidth: 2,
+                    group: 'winter'
+                },
+                {
+                    label: 'Wintermaximum',
+                    data: maxWinter,
+                    borderColor: 'rgb(192, 192, 192)',
+                    backgroundColor: 'rgba(192, 192, 192, 0.1)',
+                    tension: 0.4,
+                    fill: false,
+                    borderWidth: 2,
+                    group: 'winter'
+                }
+            ];
+            
+            // Alle Datasets kopieren, um mit den Originalwerten zu arbeiten
+            const allDatasets = JSON.parse(JSON.stringify(datasets));
+            
+            // Chart erstellen
+            const chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: years,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: false
+                        },
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            title: {
+                                display: true,
+                                text: 'Temperatur (°C)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Jahr'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Funktionalität für Hervorheben der Serien
+            document.querySelectorAll('.series-toggle').forEach(button => {
+                button.addEventListener('click', () => {
+                    const series = button.getAttribute('data-series');
+                    
+                    // Alle Buttons zurücksetzen
+                    document.querySelectorAll('.series-toggle').forEach(btn => {
+                        btn.classList.remove('btn-primary');
+                        btn.classList.add('btn-outline-secondary');
+                    });
+                    
+                    // Geklickten Button aktivieren
+                    button.classList.remove('btn-outline-secondary');
+                    button.classList.add('btn-primary');
+                    
+                    if (series === 'alles') {
+                        // Alle Datensätze anzeigen
+                        chart.data.datasets = JSON.parse(JSON.stringify(allDatasets));
+                    } else {
+                        // Nur die ausgewählten Datensätze anzeigen
+                        chart.data.datasets = JSON.parse(JSON.stringify(allDatasets)).filter(
+                            dataset => dataset.group === series
+                        );
+                    }
+                    
+                    chart.update();
+                });
+            });
+            
+            // Standardmäßig alle Serien anzeigen
+            document.querySelector('.series-toggle[data-series="alles"]').click();
+        });
+    </script>
 </body>
 </html>
