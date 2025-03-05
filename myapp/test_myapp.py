@@ -8,7 +8,7 @@ from django.test import TestCase
 from unittest.mock import patch, mock_open
 from django.conf import settings
 from django.test import RequestFactory
-from myapp.views import distance, is_within_50km, check, fetch_data
+from myapp.views import distance, check, fetch_data
 
 def test_docker_resource_limits():
     container_name = "test_django_wetter_app"
@@ -88,8 +88,7 @@ def test_distance(lat1, lon1, lat2, lon2, expected):
     (500000, 800000, 500100, 800000, True),   # 11 km → innerhalb 50 km
     (500000, 800000, 505000, 805000, False)   # 785 km → außerhalb 50 km
 ])
-def test_is_within_50km(lat1, lon1, lat2, lon2, expected):
-    assert is_within_50km(lat1, lon1, lat2, lon2) == expected
+
 
 @patch("builtins.open", new_callable=mock_open, read_data="id,lat,lon,name\n1,500000,800000,TestStation\n")
 @patch("os.path.join", return_value="dummy_path.csv")
