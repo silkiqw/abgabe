@@ -8,7 +8,15 @@ from django.test import TestCase
 from unittest.mock import patch, mock_open
 from django.conf import settings
 from django.test import RequestFactory
-from myapp.views import distance, check, fetch_data
+from myapp.views import (
+    index,
+    distance,
+    is_within_rad,
+    check,
+    result,
+    fetch_data,
+    get_season
+)
 
 def test_docker_resource_limits():
     container_name = "test_django_wetter_app"
