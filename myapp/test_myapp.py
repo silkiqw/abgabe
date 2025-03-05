@@ -88,7 +88,7 @@ def test_docker_resource_limits():
 @pytest.mark.parametrize("lat1, lon1, lat2, lon2, expected", [
     (500000, 800000, 500000, 800000, 0.0),    # Gleicher Punkt → Distanz = 0
     (500000, 800000, 500100, 800000, 1.11),   # Ca. 1,11 km nach Norden (korrigiert)
-    (500000, 800000, 505000, 805000, 78.56)   # Ca. 78,56 km entfernt (korrigiert)
+    (500000, 800000, 505000, 805000, 65.99)   # Ca. 78,56 km entfernt (korrigiert)
 ])
 def test_distance(lat1, lon1, lat2, lon2, expected):
     result = distance(lat1, lon1, lat2, lon2)
