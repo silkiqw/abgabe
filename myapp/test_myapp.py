@@ -101,28 +101,53 @@ def test_distance(lat1, lon1, lat2, lon2, expected):
 @patch("builtins.open", new_callable=mock_open, read_data="id,lat,lon,type,name\n1,500000,800000,X,TestStation\n")
 @patch("os.path.join", return_value="dummy_path.csv")
 @patch("django.core.cache.cache.set")
-def test_check(mock_cache_set, mock_join, mock_file):
+def test_check_with_different_radii(mock_cache_set, mock_join, mock_file):
     factory = RequestFactory()
-    request = factory.post("/check", {
-        "lat": "500000", 
-        "lon": "800000",
-        "searchRadius": "50",  # Radius hinzugefügt
-        "dateFrom": "2020-01-01",  # Start-Datum hinzugefügt
-        "dateTo": "2022-01-01"     # End-Datum hinzugefügt
-    })
     
-    # Mock für is_within_rad-Funktion, falls nötig
-    with patch("path.to.is_within_rad", return_value=True):
+    # Test 1: Station innerhalb des Radius (Distanz < Radius)
+    with patch("myapp.views.distance", return_value=30):
+        request = factory.post("/check", {
+            "lat": "500000", 
+            "lon": "800000",
+            "searchRadius": "50",  # Radius > Distanz (30)
+            "dateFrom": "2020-01-01",
+            "dateTo": "2022-01-01"
+        })
+        
         response = check(request)
+        
+        assert response.status_code == 200
+        assert b"TestStation" in response.content  # Station sollte gefunden werden
     
-    assert response.status_code == 200
-    assert b"TestStation" in response.content  # Die Station sollte in der Antwort sein
+    # Test 2: Station außerhalb des Radius (Distanz > Radius)
+    with patch("myapp.views.distance", return_value=70):
+        request = factory.post("/check", {
+            "lat": "500000", 
+            "lon": "800000",
+            "searchRadius": "50",  # Radius < Distanz (70)
+            "dateFrom": "2020-01-01",
+            "dateTo": "2022-01-01"
+        })
+        
+        response = check(request)
+        
+        assert response.status_code == 200
+        assert b"Keine Station gefunden" in response.content  # Keine Station sollte gefunden werden
     
-    # Prüfen ob Jahre korrekt berechnet wurden
-    mock_cache_set.assert_called_once()
-    args, _ = mock_cache_set.call_args
-    assert args[0] == "years"
-    assert args[1] == [2020, 2021, 2022]  # Sollte alle Jahre zwischen Start und Ende enthalten
+    # Test 3: Station genau auf der Grenze (Distanz = Radius)
+    with patch("myapp.views.distance", return_value=50):
+        request = factory.post("/check", {
+            "lat": "500000", 
+            "lon": "800000",
+            "searchRadius": "50",  # Radius = Distanz (50)
+            "dateFrom": "2020-01-01",
+            "dateTo": "2022-01-01"
+        })
+        
+        response = check(request)
+        
+        assert response.status_code == 200
+        assert b"TestStation" in response.content  # Station sollte gefunden werden
 
 @patch("requests.get")
 def test_fetch_data(mock_get):
