@@ -129,8 +129,8 @@ def test_fetch_data_fail(mock_get):
 ])
 def test_is_within_radius(lat1, lon1, lat2, lon2, radius, expected):
     # Diese Funktion müssen wir noch implementieren
-    from myapp.views import is_within_radius
-    assert is_within_radius(lat1, lon1, lat2, lon2, radius) == expected
+    from myapp.views import is_within_rad
+    assert is_within_rad(lat1, lon1, lat2, lon2, radius) == expected
 
 # 2. Test für Datenextraktion aus dem GHCN-Format
 @pytest.fixture
