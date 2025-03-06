@@ -9,8 +9,8 @@ import re
 import requests
 import django.core.cache as cache
 from django.test import TestCase
-
-from unittest.mock import patch, mock_open
+from django.http import HttpResponse
+from unittest.mock import patch, mock_open, MagicMock
 from django.conf import settings
 from django.test import RequestFactory
 from myapp.views import (
@@ -113,20 +113,21 @@ def mock_is_within_rad(lat1, lon1, lat2, lon2, r):
     else:
         return True
 
-@pytest.fixture
-def mock_stations_file():
-    stations_content = """USW00094728 33.640   -84.427  TMAX 1878 2023
-USW00094728 33.640   -84.427  TMIN 1878 2023"""
-    with patch("builtins.open", new_callable=mock_open, read_data=stations_content) as m:
-        yield m
-
+@patch("django.shortcuts.render")
 @patch("myapp.views.is_within_rad", side_effect=mock_is_within_rad)
 @patch("myapp.views.read_stations", return_value="""USW00094728 33.640   -84.427  TMAX 1878 2023
 USW00094728 33.640   -84.427  TMIN 1878 2023""")
 @patch("myapp.views.get_name", return_value="TestStation")
 @patch("django.core.cache.cache.set")
-def test_check_inside_radius(mock_cache_set, mock_get_name, mock_read_stations, mock_is_within_rad_func):
+def test_check_inside_radius(mock_cache_set, mock_get_name, mock_read_stations, 
+                            mock_is_within_rad_func, mock_render):
     """Test wenn die Station innerhalb des Radius liegt"""
+    # Konfiguriere mock_render, um ein HttpResponse zurückzugeben
+    mock_render.return_value = HttpResponse("Test Response")
+    
+    from django.test import RequestFactory
+    from myapp.views import check
+    
     factory = RequestFactory()
     request = factory.post("/check", {
         "lat": "500000", 
@@ -138,16 +139,29 @@ def test_check_inside_radius(mock_cache_set, mock_get_name, mock_read_stations, 
     
     response = check(request)
     
-    # Prüfe stattdessen, ob die Response ein 200 OK enthält
-    assert response.status_code == 200
-    # Prüfe, ob der erwartete Inhalt in der Response ist
-    content = response.content.decode('utf-8')
-    assert "TestStation" in content
+    # Prüfe, ob render aufgerufen wurde
+    mock_render.assert_called_once()
     
-    mock_cache_set.assert_called_once()
-    args, kwargs = mock_cache_set.call_args
-    assert args[0] == "years"
-    assert args[1] == [2020, 2021, 2022]
+    # Prüfe, ob der richtige Template-Name verwendet wurde
+    template_name = mock_render.call_args[0][1]
+    assert template_name == 'index.html'
+    
+    # Prüfe, ob der Kontext die erwarteten Daten enthält
+    context = mock_render.call_args[0][2]
+    assert 'result' in context
+    
+    # Prüfe, ob die Station-ID und der Name korrekt sind
+    assert isinstance(context['result'], list)
+    assert len(context['result']) > 0
+    assert context['result'][0][1] == "TestStation"
+    
+    # Prüfe, ob cache.set für die Jahre aufgerufen wurde
+    mock_cache_set.assert_called()
+    call_args = [call[0] for call in mock_cache_set.call_args_list]
+    # Finde den Aufruf für "years"
+    years_call = next((args for args in call_args if args[0] == "years"), None)
+    assert years_call is not None
+    assert years_call[1] == [2020, 2021, 2022]
     
 @patch("myapp.views.is_within_rad", side_effect=mock_is_within_rad)
 @patch("builtins.open", new_callable=mock_open, read_data="id,lat,lon,type,name\n1,500000,800000,X,TestStation\n")
