@@ -52,8 +52,9 @@ def check(request):
             for i in range(1, 128025):          #Distanzüberrüfung
                 if(is_within_rad(lat, lon, data[i][1], data[i][2], rad)):
                     in50.append([data[i][0],data[i][4]])
-            if(len(in50) == 0):#check ob leere Liste -> keine Treffer
-                return render(request, 'index.html', {'result': "Keine Station gefunden"})
+            if(len(in50) == 0): #check ob leere Liste -> keine Treffer
+            # Setze eine Nachrichtenvariable, aber result bleibt eine leere Liste
+                return render(request, 'index.html', {'result': [], 'message': "Keine Station gefunden"})
             else:
                 return render(request, 'index.html', {'result': in50})
             
