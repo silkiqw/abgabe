@@ -14,6 +14,7 @@ from unittest.mock import patch, mock_open
 from django.conf import settings
 from django.test import RequestFactory
 from myapp.views import (
+    distance
     is_within_rad,
     filter_duplicates,
     remove_duplicates,
