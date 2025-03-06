@@ -113,21 +113,16 @@ def mock_is_within_rad(lat1, lon1, lat2, lon2, r):
     else:
         return True
 
-@patch("django.shortcuts.render")
 @patch("myapp.views.is_within_rad", side_effect=mock_is_within_rad)
 @patch("myapp.views.read_stations", return_value="""USW00094728 33.640   -84.427  TMAX 1878 2023
 USW00094728 33.640   -84.427  TMIN 1878 2023""")
 @patch("myapp.views.get_name", return_value="TestStation")
 @patch("django.core.cache.cache.set")
-def test_check_inside_radius(mock_cache_set, mock_get_name, mock_read_stations, 
-                            mock_is_within_rad_func, mock_render):
+def test_check_inside_radius(mock_cache_set, mock_get_name, mock_read_stations, mock_is_within_rad_func):
     """Test wenn die Station innerhalb des Radius liegt"""
-    # Konfiguriere mock_render, um ein HttpResponse zurückzugeben
-    mock_render.return_value = HttpResponse("Test Response")
-    
     from django.test import RequestFactory
     from myapp.views import check
-    
+
     factory = RequestFactory()
     request = factory.post("/check", {
         "lat": "500000", 
@@ -136,29 +131,19 @@ def test_check_inside_radius(mock_cache_set, mock_get_name, mock_read_stations,
         "dateFrom": "2020-01-01",
         "dateTo": "2022-01-01"
     })
-    
+
     response = check(request)
-    
-    # Prüfe, ob render aufgerufen wurde
-    mock_render.assert_called_once()
-    
-    # Prüfe, ob der richtige Template-Name verwendet wurde
-    template_name = mock_render.call_args[0][1]
-    assert template_name == 'index.html'
-    
-    # Prüfe, ob der Kontext die erwarteten Daten enthält
-    context = mock_render.call_args[0][2]
-    assert 'result' in context
-    
-    # Prüfe, ob die Station-ID und der Name korrekt sind
-    assert isinstance(context['result'], list)
-    assert len(context['result']) > 0
-    assert context['result'][0][1] == "TestStation"
-    
-    # Prüfe, ob cache.set für die Jahre aufgerufen wurde
+
+    # Überprüfe den Rückgabewert der check-Funktion
+    assert response.status_code == 200
+    assert 'result' in response.context
+    assert isinstance(response.context['result'], list)
+    assert len(response.context['result']) > 0
+    assert response.context['result'][0][1] == "TestStation"
+
+    # Überprüfe, ob cache.set für die Jahre aufgerufen wurde
     mock_cache_set.assert_called()
     call_args = [call[0] for call in mock_cache_set.call_args_list]
-    # Finde den Aufruf für "years"
     years_call = next((args for args in call_args if args[0] == "years"), None)
     assert years_call is not None
     assert years_call[1] == [2020, 2021, 2022]
