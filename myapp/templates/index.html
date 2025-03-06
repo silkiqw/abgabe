@@ -112,13 +112,13 @@
 </head>
 <body>
     <div class="container-fluid p-0">
-        <!-- Navigation Tabs -->
+    <!-- Navigation Tabs -->
         <ul class="nav nav-tabs px-3 border-bottom">
             <li class="nav-item">
-                <a class="nav-link active" href="#">DatenInput</a>
+                <a class="nav-link active" href="{% url 'index' %}">DatenInput</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="#">Wetterstationdetails</a>
+                <a class="nav-link" href="{% url 'result' %}">Wetterstationdetails</a>
             </li>
         </ul>
         <form action="{% url 'check' %}" method="post">
