@@ -1,8 +1,11 @@
+import os
+import django
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'project.settings')
+django.setup()
 import pytest
 import time
 import subprocess
 import re
-import os
 import requests
 import django.core.cache as cache
 from django.test import TestCase
@@ -102,23 +105,27 @@ def test_distance(lat1, lon1, lat2, lon2, expected):
 
 def mock_is_within_rad(lat1, lon1, lat2, lon2, r):
     # Test 1: Station innerhalb des Radius
-    if int(r) == 50 and lat1 == "500000" and lon1 == "800000" and lat2 == "500000" and lon2 == "800000":
+    if int(r) == 50 and lat1 == "500000" and lon1 == "800000" and lat2 == 500000 and lon2 == 800000:
         return True
     # Test 2: Station außerhalb des Radius
-    elif int(r) == 30 and lat1 == "500000" and lon1 == "800000" and lat2 == "500000" and lon2 == "800000":
+    elif int(r) == 30 and lat1 == "500000" and lon1 == "800000" and lat2 == 500000 and lon2 == 800000:
         return False
     else:
         return True
 
 @pytest.fixture
-def mock_is_within_rad_function():
-    with patch("myapp.views.is_within_rad", side_effect=mock_is_within_rad):
-        yield
+def mock_stations_file():
+    stations_content = """USW00094728 33.640   -84.427  TMAX 1878 2023
+USW00094728 33.640   -84.427  TMIN 1878 2023"""
+    with patch("builtins.open", new_callable=mock_open, read_data=stations_content) as m:
+        yield m
 
-@patch("builtins.open", new_callable=mock_open, read_data="id,lat,lon,type,name\n1,500000,800000,X,TestStation\n")
-@patch("os.path.join", return_value="dummy_path.csv")
+@patch("myapp.views.is_within_rad", side_effect=mock_is_within_rad)
+@patch("myapp.views.read_stations", return_value="""USW00094728 33.640   -84.427  TMAX 1878 2023
+USW00094728 33.640   -84.427  TMIN 1878 2023""")
+@patch("myapp.views.get_name", return_value="TestStation")
 @patch("django.core.cache.cache.set")
-def test_check_inside_radius(mock_cache_set, mock_join, mock_file, mock_is_within_rad_function):
+def test_check_inside_radius(mock_cache_set, mock_get_name, mock_read_stations, mock_is_within_rad_func):
     """Test wenn die Station innerhalb des Radius liegt"""
     factory = RequestFactory()
     request = factory.post("/check", {
@@ -129,14 +136,13 @@ def test_check_inside_radius(mock_cache_set, mock_join, mock_file, mock_is_withi
         "dateTo": "2022-01-01"
     })
     
-    from myapp.views import check  # Importieren Sie die zu testende Funktion
     response = check(request)
     
-    assert response.status_code == 200
-    assert b"TestStation" in response.content
+    assert "result" in response.context
+    assert response.context["result"][0][1] == "TestStation"
     
     mock_cache_set.assert_called_once()
-    args, _ = mock_cache_set.call_args
+    args, kwargs = mock_cache_set.call_args
     assert args[0] == "years"
     assert args[1] == [2020, 2021, 2022]
 
