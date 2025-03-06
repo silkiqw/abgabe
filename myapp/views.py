@@ -88,7 +88,7 @@ def check(request):
         stations = filter_duplicates(stations)
         stations = remove_duplicates(stations)
         stations = get_names(stations)
-
+        cache.set("stations", stations, timeout=3600)
 
         if(len(stations) == 0):#check ob leere Liste -> keine Treffer
             return render(request, 'index.html', {'result2': "Für diese Kombination von Koordinaten und Zeitraum gibt es nicht genügend Daten."})
@@ -184,3 +184,11 @@ def get_name(id):
             for i in range(1, 128025):
                 if data[i][0] == str(id):
                     return data[i][4] 
+
+def back(request):
+    if request.method == "POST":
+        stations = cache.get("stations",[])
+        if(len(stations) == 0):
+            return render(request, 'index.html', {'no': ""})
+        else:
+            return render(request, 'index.html', {'result': stations})
