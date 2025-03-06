@@ -219,6 +219,110 @@
         //searchButton.addEventListener('click', function() {
         //    resultsContainer.style.display = 'block';
         //});
+
+        function validateDateInputs() {
+  const dateFrom = document.getElementById('dateFrom');
+  const dateTo = document.getElementById('dateTo');
+  
+  // Setze min/max-Attribute für die Datumsbereiche
+  const minDate = '1973-01-01';
+  const maxDate = '2024-12-31';
+  
+  dateFrom.min = minDate;
+  dateFrom.max = maxDate;
+  dateTo.min = minDate;
+  dateTo.max = maxDate;
+  
+  // Event-Listener für das Von-Datum
+  dateFrom.addEventListener('change', function() {
+    // Prüfe, ob das Datum innerhalb des erlaubten Bereichs liegt
+    if (this.value < minDate) {
+      alert('Das Datum darf nicht vor 1973 liegen.');
+      this.value = minDate;
+    } else if (this.value > maxDate) {
+      alert('Das Datum darf nicht nach 2024 liegen.');
+      this.value = maxDate;
+    }
+    
+    // Aktualisiere das Mindestdatum für das Bis-Feld
+    dateTo.min = this.value;
+    
+    // Wenn das Bis-Datum vor dem Von-Datum liegt, korrigiere es
+    if (dateTo.value && dateTo.value < this.value) {
+      alert('Das Bis-Datum darf nicht vor dem Von-Datum liegen.');
+      dateTo.value = this.value;
+    }
+  });
+  
+  // Event-Listener für das Bis-Datum
+  dateTo.addEventListener('change', function() {
+    // Prüfe, ob das Datum innerhalb des erlaubten Bereichs liegt
+    if (this.value < minDate) {
+      alert('Das Datum darf nicht vor 1973 liegen.');
+      this.value = minDate;
+    } else if (this.value > maxDate) {
+      alert('Das Datum darf nicht nach 2024 liegen.');
+      this.value = maxDate;
+    }
+    
+    // Wenn das Bis-Datum vor dem Von-Datum liegt, korrigiere es
+    if (dateFrom.value && this.value < dateFrom.value) {
+      alert('Das Bis-Datum darf nicht vor dem Von-Datum liegen.');
+      this.value = dateFrom.value;
+    }
+  });
+}
+
+// Funktion zur Formularvalidierung vor dem Absenden
+function validateForm(event) {
+  const dateFrom = document.getElementById('dateFrom');
+  const dateTo = document.getElementById('dateTo');
+  
+  // Prüfe, ob die Datumsfelder ausgefüllt sind
+  if (!dateFrom.value || !dateTo.value) {
+    alert('Bitte geben Sie sowohl ein Von- als auch ein Bis-Datum ein.');
+    event.preventDefault();
+    return false;
+  }
+  
+  // Prüfe, ob die Daten im gültigen Bereich liegen
+  const minDate = '1973-01-01';
+  const maxDate = '2024-12-31';
+  
+  if (dateFrom.value < minDate || dateFrom.value > maxDate) {
+    alert('Das Von-Datum muss zwischen 1973 und 2024 liegen.');
+    event.preventDefault();
+    return false;
+  }
+  
+  if (dateTo.value < minDate || dateTo.value > maxDate) {
+    alert('Das Bis-Datum muss zwischen 1973 und 2024 liegen.');
+    event.preventDefault();
+    return false;
+  }
+  
+  // Prüfe, ob das Bis-Datum nach dem Von-Datum liegt
+  if (dateTo.value < dateFrom.value) {
+    alert('Das Bis-Datum darf nicht vor dem Von-Datum liegen.');
+    event.preventDefault();
+    return false;
+  }
+  
+  // Wenn alle Validierungen erfolgreich sind, wird das Formular abgesendet
+  return true;
+}
+
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Initialisiere die Datumsvalidierung
+  validateDateInputs();
+  
+  
+  const form = document.querySelector('form[action*="check"]');
+  if (form) {
+    form.addEventListener('submit', validateForm);
+  }
+});
     </script>
     
 </body>
