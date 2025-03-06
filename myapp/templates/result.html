@@ -85,7 +85,9 @@
                     <h2 class="mb-4">Aufgerufene Wetterstation Details</h2>
                 </div>
             </div>
-            
+            {% if name %}
+            <h3> Wetterstation: {{ name }} </h3>
+            {% endif %}
             <div class="row">
                 <div class="col-md-6">
                     <!-- Table -->
