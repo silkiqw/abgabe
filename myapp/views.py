@@ -15,9 +15,9 @@ def index(request):     #Startseite
 #Distanzberechnung nahc Haversine
 def distance(lat1, lon1, lat2, lon2):
     lat1 = float(lat1) #Daten kommen als String  
-    lat2 = int(lat2)/10000 #Anpassung der CSV-Werte
+    lat2 = float(lat2)
     lon1 = float(lon1) 
-    lon2 = int(lon2)/10000
+    lon2 = float(lon2)
     R = 6371  #mittlerer Erdradius km
     lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
     dlat = lat2 - lat1
