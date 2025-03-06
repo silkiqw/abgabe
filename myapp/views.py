@@ -65,9 +65,10 @@ def check(request):
         start_date = int(request.POST.get("dateFrom")[:4])
         end_date = int(request.POST.get("dateTo")[:4])
         years = []
-        while start_date <= end_date:
-            years.append(start_date)
-            start_date = start_date + 1
+        date = start_date
+        while date <= end_date:
+            years.append(date)
+            date = date + 1
         cache.set("years",years,timeout=3600)
 
         
