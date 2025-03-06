@@ -88,11 +88,12 @@ def fetch_data(station_id, years):     #Zugriff auf die Daten der webseite
                 if record_type == "TMIN" or record_type == "TMAX":
                     for i in range(21, len(line), 8):
                         day_value = line[i:i+5].strip()
-                        if day_value.isdigit():
-                            month = int(line[15:17].strip())
-                            value = int(day_value) / 10.0
-                            season = get_season(month)
-                            records.append((record_year, record_type, season, value))
+                        if day_value.lstrip("-").isdigit():
+                            if int(day_value) != -9999:
+                                month = int(line[15:17].strip())
+                                value = int(day_value) / 10
+                                season = get_season(month)
+                                records.append((record_year, record_type, season, value))
     
     df = pandas.DataFrame(records, columns=["Year", "Type","Season", "Value"])
     avg_values = df.groupby(["Type","Year"])["Value"].mean().unstack().to_dict()
