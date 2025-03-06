@@ -70,9 +70,12 @@
     <div class="container-fluid p-0">
         <!-- Navigation Tabs -->
         <ul class="nav nav-tabs px-3 border-bottom">
-    <li class="nav-item">
-        <a class="nav-link" href="{% url 'index' %}">DatenInput</a>
-    </li>
+    <form action="{% url 'back' %}"  method="post">
+        {% csrf_token %}
+        <li class="nav-item">
+        <button class="nav-link" type="submit">DatenInput</button>
+        </li>
+    </form>
     <li class="nav-item">
         <a class="nav-link" href="{% url 'result' %}">Wetterstationdetails</a>
     </li>
