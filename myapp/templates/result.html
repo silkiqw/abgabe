@@ -70,13 +70,13 @@
     <div class="container-fluid p-0">
         <!-- Navigation Tabs -->
         <ul class="nav nav-tabs px-3 border-bottom">
-            <li class="nav-item">
-                <a class="nav-link" href="index.html">DatenInput</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link active" href="#">Wetterstationdetails</a>
-            </li>
-        </ul>
+    <li class="nav-item">
+        <a class="nav-link" href="{% url 'index' %}">DatenInput</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{% url 'result' %}">Wetterstationdetails</a>
+    </li>
+</ul>
         
         <div class="container py-4">
             <!-- Main Content -->
@@ -98,12 +98,12 @@
                                     <th scope="col">Jahr</th>
                                     <th scope="col">Min</th>
                                     <th scope="col">Max</th>
-                                    <th scope="col">Min Spring</th>
-                                    <th scope="col">Max Spring</th>
-                                    <th scope="col">Min Summer</th>
-                                    <th scope="col">Max Summer</th>
-                                    <th scope="col">Min Autumn</th>
-                                    <th scope="col">Max Autumn</th>
+                                    <th scope="col">Min Frühling</th>
+                                    <th scope="col">Max Frühling</th>
+                                    <th scope="col">Min Sommer</th>
+                                    <th scope="col">Max Sommer</th>
+                                    <th scope="col">Min Herbst</th>
+                                    <th scope="col">Max Herbst</th>
                                     <th scope="col">Min Winter</th>
                                     <th scope="col">Max Winter</th>
                                 </tr>
