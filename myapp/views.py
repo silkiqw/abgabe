@@ -14,9 +14,9 @@ def index(request):     #Startseite
     
 #Distanzberechnung nahc Haversine
 def distance(lat1, lon1, lat2, lon2):
-    lat1 = int(lat1)/10000 #Daten kommen als String deswegen Umwandlung 
-    lat2 = int(lat2)/10000
-    lon1 = int(lon1)/10000 #Anpassung der CSV-Werte
+    lat1 = float(lat1) #Daten kommen als String  
+    lat2 = int(lat2)/10000 #Anpassung der CSV-Werte
+    lon1 = float(lon1) 
     lon2 = int(lon2)/10000
     R = 6371  #mittlerer Erdradius km
     lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
@@ -33,10 +33,11 @@ def is_within_rad(lat1, lon1, lat2, lon2, r):
 
 def check(request):
     if request.method == 'POST':
-        print(request.POST)
         lat = request.POST.get("lat") #Eingabe aus html-form
         lon = request.POST.get("lon")
         rad = request.POST.get("searchRadius")
+        cache.set("lat",lat,timeout=3600)
+        print(cache.get("lat",0))
         start_date = int(request.POST.get("dateFrom")[:4])
         end_date = int(request.POST.get("dateTo")[:4])
         years = []
@@ -60,10 +61,10 @@ def check(request):
 def result(request):    #Anzeigen der Stationsdaten
     if request.method == 'POST':
         id = request.POST.get("choice")
+        name = get_name(id)
         years = cache.get("years",[2024])
-        print(type(years))
         res = fetch_data(id, years)
-        return render(request, 'result.html', {'result': res}) #weiterleitung auf neue Seite
+        return render(request, 'result.html', {'result': res, 'name' : name}) #weiterleitung auf neue Seite
 
 DATA_URL = "https://www1.ncdc.noaa.gov/pub/data/ghcn/daily/all/"    #Url zu der Liste aller Stationen
 
@@ -75,7 +76,6 @@ def fetch_data(station_id, years):     #Zugriff auf die Daten der webseite
         raise Exception("Fehler beim Abrufen der Wetterdaten")
     records = []
     for year in years:
-        print(year)
         lines = response.text.split("\n")
         
         for line in lines:
@@ -100,16 +100,16 @@ def fetch_data(station_id, years):     #Zugriff auf die Daten der webseite
     for y in season_avg_values:
         year = []
         year.append(y)
-        year.append(avg_values[y].get("TMIN"))
-        year.append(avg_values[y].get("TMAX"))
-        year.append(season_avg_values[y].get(('Spring', 'TMIN')))
-        year.append(season_avg_values[y].get(('Spring', 'TMAX')))
-        year.append(season_avg_values[y].get(('Summer', 'TMIN')))
-        year.append(season_avg_values[y].get(('Summer', 'TMAX')))
-        year.append(season_avg_values[y].get(('Fall', 'TMIN')))
-        year.append(season_avg_values[y].get(('Fall', 'TMAX')))
-        year.append(season_avg_values[y].get(('Winter', 'TMIN')))
-        year.append(season_avg_values[y].get(('Winter', 'TMAX')))        
+        year.append(round(avg_values[y].get("TMIN"),1))
+        year.append(round(avg_values[y].get("TMAX"),1))
+        year.append(round(season_avg_values[y].get(('Spring', 'TMIN')),1))
+        year.append(round(season_avg_values[y].get(('Spring', 'TMAX')),1))
+        year.append(round(season_avg_values[y].get(('Summer', 'TMIN')),1))
+        year.append(round(season_avg_values[y].get(('Summer', 'TMAX')),1))
+        year.append(round(season_avg_values[y].get(('Fall', 'TMIN')),1))
+        year.append(round(season_avg_values[y].get(('Fall', 'TMAX')),1))
+        year.append(round(season_avg_values[y].get(('Winter', 'TMIN')),1))
+        year.append(round(season_avg_values[y].get(('Winter', 'TMAX')),1))        
         avg_list.append(year)
 
     if len(avg_list) == 0:
@@ -118,11 +118,30 @@ def fetch_data(station_id, years):     #Zugriff auf die Daten der webseite
         return avg_list
     
 def get_season(month):
-    if month in [3, 4, 5]:
-        return "Spring"
-    elif month in [6, 7, 8]:
-        return "Summer"
-    elif month in [9, 10, 11]:
-        return "Fall"
+    lat = float(cache.get("lat",0))
+    if lat >= 0:
+        if month in [3, 4, 5]:
+            return "Spring"
+        elif month in [6, 7, 8]:
+            return "Summer"
+        elif month in [9, 10, 11]:
+            return "Fall"
+        else:
+            return "Winter"
     else:
-        return "Winter"
+        if month in [3, 4, 5]:
+            return "Fall"
+        elif month in [6, 7, 8]:
+            return "Winter"
+        elif month in [9, 10, 11]:
+            return "Spring"
+        else:
+            return "Summer"
+        
+def get_name(id):
+    with open(os.path.join(settings.BASE_DIR, "data", "station.csv"), mode='r', encoding='utf-8') as file:#Zugriff stations.csv
+            reader = csv.reader(file)
+            data = list(reader)
+            for i in range(1, 128025):
+                if data[i][0] == str(id):
+                    return data[i][4] 
