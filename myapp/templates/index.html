@@ -171,16 +171,14 @@
         </form>
         <!-- Search Results -->
         {% if result %}
-            <h3 class="mb-3">Suchergebnisse</h3>
-            <form action="{% url 'result' %}" method="post">
-                {% csrf_token %}
-            <div>
-                <ul class="list-group">
-                    {% for res in result %}
-                    <li class="list-group-item result-item">
-                    <button class="weather-station" type="submit" name="choice" value="{{ res.0 }}">{{ res.1 }}</button>
-                    </li>
-                {% endfor %}
+            <h3 class="mb-3">Suchergebnisse ({{ result|length }} gefunden)</h3>
+            {% for res in result %}
+<li class="list-group-item result-item">
+    <!-- Debug-Information -->
+    <p>Debug: {{ res.0 }} - {{ res.1 }}</p>
+    <button class="weather-station" type="submit" name="choice" value="{{ res.0 }}">{{ res.1 }}</button>
+</li>
+{% endfor %}
                 </ul>
             </div>
         </form>
