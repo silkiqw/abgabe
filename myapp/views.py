@@ -47,7 +47,6 @@ def get_names(lst):
     return lst
 
 def read_stations():
-    file_path = "myapp/ghcnd-inventory.txt"
     try:
         with open(os.path.join(settings.BASE_DIR, "data", "stations.txt"), mode='r', encoding='utf-8') as file:
             return file.read()
