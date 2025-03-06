@@ -145,11 +145,12 @@ def test_check_inside_radius(mock_cache_set, mock_get_name, mock_read_stations, 
     args, kwargs = mock_cache_set.call_args
     assert args[0] == "years"
     assert args[1] == [2020, 2021, 2022]
-
+    
+@patch("myapp.views.is_within_rad", side_effect=mock_is_within_rad)
 @patch("builtins.open", new_callable=mock_open, read_data="id,lat,lon,type,name\n1,500000,800000,X,TestStation\n")
 @patch("os.path.join", return_value="dummy_path.csv")
 @patch("django.core.cache.cache.set")
-def test_check_outside_radius(mock_cache_set, mock_join, mock_file, mock_is_within_rad_function):
+def test_check_outside_radius(mock_cache_set, mock_join, mock_file, mock_is_within_rad):
     """Test wenn die Station außerhalb des Radius liegt"""
     factory = RequestFactory()
     request = factory.post("/check", {
