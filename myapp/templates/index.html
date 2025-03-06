@@ -170,6 +170,9 @@
             </div>
         </form>
         <!-- Search Results -->
+        {% if result2 %}
+            <h3> {{ result2 }} </h3>
+        {% endif %}
         {% if result %}
     <h3 class="mb-3">Suchergebnisse ({{ result|length }} gefunden)</h3>
     <form action="{% url 'result' %}" method="post">
