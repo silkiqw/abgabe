@@ -31,13 +31,38 @@ def is_within_rad(lat1, lon1, lat2, lon2, r):
     d = distance(lat1, lon1, lat2, lon2)
     return d <= r
 
+def filter_duplicates(lst):
+    return [x for x in lst if lst.count(x) > 1]
+
+def remove_duplicates(lst):
+    l_new = []
+    for l in range(len(lst)):
+        if l % 2 == 0:
+            l_new.append(lst[l])
+    return l_new
+
+def get_names(lst):
+    for l in lst:
+        l.append(get_name(l[0]))
+    return lst
+
+def read_stations():
+    file_path = "myapp/ghcnd-inventory.txt"
+    try:
+        with open(os.path.join(settings.BASE_DIR, "data", "stations.txt"), mode='r', encoding='utf-8') as file:
+            return file.read()
+    except Exception as e:
+        print("Fehler beim Lesen der Datei:", e)
+        return []
+    
+
+
 def check(request):
     if request.method == 'POST':
         lat = request.POST.get("lat") #Eingabe aus html-form
         lon = request.POST.get("lon")
         rad = request.POST.get("searchRadius")
         cache.set("lat",lat,timeout=3600)
-        print(cache.get("lat",0))
         start_date = int(request.POST.get("dateFrom")[:4])
         end_date = int(request.POST.get("dateTo")[:4])
         years = []
@@ -45,18 +70,30 @@ def check(request):
             years.append(start_date)
             start_date = start_date + 1
         cache.set("years",years,timeout=3600)
-        with open(os.path.join(settings.BASE_DIR, "data", "station.csv"), mode='r', encoding='utf-8') as file:#Zugriff stations.csv
-            reader = csv.reader(file)
-            data = list(reader)
-            in50 = []   #Liste Stationen in Distanz
-            for i in range(1, 128025):          #Distanzüberrüfung
-                if(is_within_rad(lat, lon, data[i][1], data[i][2], rad)):
-                    in50.append([data[i][0],data[i][4]])
-            if(len(in50) == 0): #check ob leere Liste -> keine Treffer
-            # Setze eine Nachrichtenvariable, aber result bleibt eine leere Liste
-                return render(request, 'index.html', {'result': [], 'message': "Keine Station gefunden"})
-            else:
-                return render(request, 'index.html', {'result': in50})
+
+        
+        response = read_stations()
+        stations = []
+        for line in response.split("\n"):
+            if line.strip():
+                station_id = line[:11].strip()
+                station_lat = float(line[12:20].strip())
+                station_lon = float(line[21:30].strip())
+                element = line[31:35].strip()
+                start = int(line[36:40].strip())
+                end = int(line[41:45].strip())
+                if element in ("TMIN", "TMAX") and start <= int(start_date) and end >= int(end_date):
+                    if (is_within_rad(lat, lon, station_lat, station_lon, rad)):
+                        stations.append([station_id])
+        stations = filter_duplicates(stations)
+        stations = remove_duplicates(stations)
+        stations = get_names(stations)
+
+
+        if(len(stations) == 0):#check ob leere Liste -> keine Treffer
+            return render(request, 'index.html', {'result2': "Für diese Kombination von Koordinaten und Zeitraum gibt es nicht genügend Daten."})
+        else:
+            return render(request, 'index.html', {'result': stations})
             
 
 def result(request):    #Anzeigen der Stationsdaten
