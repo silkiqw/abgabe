@@ -142,7 +142,7 @@ def fetch_data(station_id, years):     #Zugriff auf die Daten der webseite
                                 print(f"Extracted month: {month}")
                                 value = int(day_value) / 10
                                 season = get_season(month)
-                                print(f"Season: {season}, Value: {value}")
+                                
                                 records.append((record_year, record_type, season, value))
     
     df = pandas.DataFrame(records, columns=["Year", "Type","Season", "Value"])
