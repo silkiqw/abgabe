@@ -160,13 +160,18 @@ def test_read_stations_error(mock_file):
     # Test für read_stations mit Fehler
     assert read_stations() == []
 
+@patch("django.shortcuts.render")
 @patch("myapp.views.read_stations", return_value=(
     "ID1        50.0      10.0      TMAX 2000 2020\n"
     "ID2        60.0      20.0      TMIN 2001 2021"
 ))
 @patch("myapp.views.is_within_rad", return_value=True)
 @patch("myapp.views.get_name", return_value="TestStation")
-def test_check_within_radius(mock_get_name, mock_is_within_rad, mock_read_stations):
+def test_check_within_radius(mock_get_name, mock_is_within_rad, mock_read_stations, mock_render):
+    # Configure mock_render to return a response with context
+    mock_render.return_value = HttpResponse()
+    mock_render.return_value.context = {'result': [["ID1", "TestStation"]]}
+    
     # Test für check innerhalb Radius
     factory = RequestFactory()
     request = factory.post("/check", {
@@ -176,14 +181,23 @@ def test_check_within_radius(mock_get_name, mock_is_within_rad, mock_read_statio
         "dateFrom": "2000-01-01",
         "dateTo": "2020-01-01"
     })
+    
     response = check(request)
-    assert response.status_code == 200
-    assert 'result' in response.context
-    assert response.context['result'] == [["ID1", "TestStation"]]
+    
+    # Assert that render was called with the expected context
+    mock_render.assert_called_once()
+    context = mock_render.call_args[0][2]  # Get the context passed to render
+    assert 'result' in context
+    assert context['result'] == [["ID1", "TestStation"]]
 
+@patch("django.shortcuts.render")
 @patch("myapp.views.read_stations", return_value="ID1 50.0 10.0 TMAX 2000 2020\nID2 60.0 20.0 TMIN 2001 2021")
 @patch("myapp.views.is_within_rad", return_value=False)
-def test_check_outside_radius(mock_is_within_rad, mock_read_stations):
+def test_check_outside_radius(mock_is_within_rad, mock_read_stations, mock_render):
+    # Configure mock_render to return a response with context
+    mock_render.return_value = HttpResponse()
+    mock_render.return_value.context = {'result2': "Für diese Kombination von Koordinaten und Zeitraum gibt es nicht genügend Daten."}
+    
     # Test für check außerhalb Radius
     factory = RequestFactory()
     request = factory.post("/check", {
@@ -193,10 +207,14 @@ def test_check_outside_radius(mock_is_within_rad, mock_read_stations):
         "dateFrom": "2000-01-01",
         "dateTo": "2020-01-01"
     })
+    
     response = check(request)
-    assert response.status_code == 200
-    assert 'result2' in response.context
-    assert response.context['result2'] == "Für diese Kombination von Koordinaten und Zeitraum gibt es nicht genügend Daten."
+    
+    # Assert that render was called with the expected context
+    mock_render.assert_called_once()
+    context = mock_render.call_args[0][2]  # Get the context passed to render
+    assert 'result2' in context
+    assert context['result2'] == "Für diese Kombination von Koordinaten und Zeitraum gibt es nicht genügend Daten."
 
 @patch("requests.get")
 def test_fetch_data(mock_get):
