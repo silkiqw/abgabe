@@ -262,7 +262,7 @@ def test_fetch_data(mock_get_season, mock_get):
 
     # Teste, ob das Ergebnis die erwartete Struktur hat
     expected_output = [[2020, 7.1, 15.0, 4.3, 15.4, 11.6, 23.5, 6.1, 14.0, 2.6, 6.4]]
-    assert result == expected_output
+    assert [line for line in actual_output if line.strip()] == [line for line in expected_output if line.strip()]
 
 
 
