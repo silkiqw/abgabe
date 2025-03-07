@@ -24,4 +24,5 @@ urlpatterns = [
     path('check/', views.check, name='check'),
     path('result/', views.result, name='result'),
     path('back/', views.back, name='back'),
+    path('back_data/', views.back_data, name='back_data'),
 ]
