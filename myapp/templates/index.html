@@ -141,11 +141,11 @@
             <div class="row search-form-row mb-4">
                 <div class="col-md-2 mb-3">
                     <label for="lat" class="form-label">Breitengrad eingeben</label>
-                    <input type="number" step="0.0001" name="lat" class="form-control" id="lat" required>
+                    <input type="number" step="0.0001" name="lat" class="form-control" id="lat" required {% if inputs %} value="{{ inputs.0 }}" {% endif %}>
                 </div>
                 <div class="col-md-2 mb-3">
                     <label for="lon" class="form-label">Längengrad eingeben</label>
-                    <input type="number" step="0.0001" name="lon" class="form-control" id="lon" required>
+                    <input type="number" step="0.0001" name="lon" class="form-control" id="lon" required {% if inputs %} value="{{ inputs.1 }}" {% endif %}>
                 </div>
                 <div class="col-md-2 mb-3">
                     <label for="dateFrom" class="form-label">Von</label>
@@ -162,11 +162,11 @@
                             <div class="custom-range-container">
                                 <div class="custom-range-track"></div>
                                 <div class="custom-range-fill" id="rangeFill" style="width: 17%;"></div>
-                                <input type="range" class="custom-range" name="searchRadius" id="searchRadius" min="0" max="100" value="17" oninput="updateValue(this.value)">
+                                <input type="range" class="custom-range" name="searchRadius" id="searchRadius" min="0" max="100" {% if inputs %} value="{{ inputs.4 }}" {% else %} value="17" {% endif %} oninput="updateValue(this.value)">
                             </div>
                         </div>
                         <div class="slider-value">
-                            <span>Suchradius: </span><span name="radiusValue" id="radiusValue">17</span>km
+                            <span>Suchradius: </span><span name="radiusValue" id="radiusValue">{% if inputs %} {{ inputs.4 }} {% else %} 1" {% endif %}</span>km
                         </div>
                     </div>
                 </div>
