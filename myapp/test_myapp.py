@@ -3,12 +3,13 @@ import django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'project.settings')
 django.setup()
 import pytest
-import time
+
 import subprocess
 import re
 import requests
 import django.core.cache as cache
 from django.test import TestCase
+from django.core.cache import cache 
 from django.http import HttpResponse
 from django.shortcuts import render
 from unittest.mock import patch, mock_open
