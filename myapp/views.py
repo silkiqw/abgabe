@@ -102,6 +102,8 @@ def result(request):    #Anzeigen der Stationsdaten
         name = get_name(id)
         years = cache.get("years",[2024])
         res = fetch_data(id, years)
+        cache.set("station_data", res, timeout=3600)
+        cache.set("name",name, timeout=3600)
         return render(request, 'result.html', {'result': res, 'name' : name}) #weiterleitung auf neue Seite
 
 DATA_URL = "https://www1.ncdc.noaa.gov/pub/data/ghcn/daily/all/"    #Url zu der Liste aller Stationen
@@ -192,3 +194,12 @@ def back(request):
             return render(request, 'index.html', {'no': ""})
         else:
             return render(request, 'index.html', {'result': stations})
+
+def back_data(request):
+    if request.method == "POST":
+        station_data = cache.get("station_data", [])
+        name = cache.get("name", "Bitte Station auswählen")
+        if len(station_data) == 0:
+            return render(request, "result.html", {"name": name})
+        else:
+            return render(request, "result.html", {"result": station_data, "name": name})
