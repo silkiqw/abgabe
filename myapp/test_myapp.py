@@ -228,25 +228,41 @@ def test_fetch_data(mock_get_season, mock_get):
     # Simuliere eine erfolgreiche HTTP-Antwort
     mock_get.return_value.status_code = 200
     
-    # Simulierte Wetterdaten (angepasst an das erwartete Format)
+    # Simulierte Wetterdaten, angepasst auf die tatsächlichen Daten von 2009 bis 2024
     mock_data = """
-USW00094728  2020 01 TMAX   50   60   70   80   90  100  110  120  130  140  150  160  170  180  190  200  210  220  230  240  250  260  270  280  290  300  310  320  330  340  350
-USW00094728  2020 01 TMIN  -50  -40  -30  -20  -10    0   10   20   30   40   50   60   70   80   90  100  110  120  130  140  150  160  170  180  190  200  210  220  230  240  250
+2009 7.7 15.2 5.7 14.8 11.5 23.1 6.2 14.0 1.5 4.1
+2010 7.5 15.0 5.2 13.7 12.0 23.0 5.0 12.8 0.9 4.1
+2011 7.4 15.3 5.5 16.3 11.5 22.8 6.9 14.2 1.8 5.8
+2012 7.3 15.2 5.2 15.3 12.1 23.8 5.5 12.9 1.9 5.3
+2013 7.6 14.3 5.8 12.3 11.7 23.8 5.7 13.3 2.0 4.6
+2014 7.0 15.0 5.1 15.3 11.2 22.9 6.5 14.3 1.7 6.4
+2015 8.1 15.3 5.7 14.5 13.0 25.8 6.0 14.1 2.4 5.5
+2016 7.4 14.9 5.1 13.6 12.2 23.8 6.1 13.8 2.1 6.5
+2017 7.4 15.4 4.8 15.0 12.3 25.0 5.4 13.3 2.4 5.2
+2018 8.1 16.3 7.3 17.2 12.4 25.4 6.3 15.1 2.2 5.6
+2019 7.0 15.4 4.2 14.3 12.4 25.5 5.5 14.1 1.3 6.1
+2020 7.1 15.0 4.3 15.4 11.6 23.5 6.1 14.0 2.6 6.4
+2021 7.1 14.2 3.9 12.4 12.2 23.5 5.4 13.4 2.4 5.9
+2022 7.6 15.9 5.9 15.0 12.4 25.9 5.7 15.1 2.0 6.2
+2023 8.1 15.9 5.9 13.8 12.6 25.2 7.3 16.7 3.1 6.8
+2024 7.9 16.0 5.5 16.2 13.5 25.0 7.1 13.6 2.7 7.7
     """
     mock_get.return_value.text = mock_data
     
-    # Setze Cache-Wert für lat (da get_season ihn verwendet)
-    cache.set("lat", 50.0)
+    # Setze Cache-Wert für lat und lon (da get_season ihn verwendet)
+    cache.set("lat", 48.4022)
+    cache.set("lon", 11.6944)
     
     # Führe die Funktion aus
     result = fetch_data("USW00094728", [2020])
     print("Fetch data result:", result)  # Debugging-Ausgabe
     
     # Teste, ob das Ergebnis eine Liste ist
-    assert isinstance(result, list)  # Dieser Test könnte fehlschlagen, wenn keine Daten vorhanden sind
+    assert isinstance(result, list)
     
     # Teste, ob das Ergebnis die erwartete Struktur hat
-    expected_output = [[2020, 10.0, 20.0, None, None, None, None, None, None, None, None]]
+    # Hier als Beispiel die Werte aus den echten Wetterdaten für 2020
+    expected_output = [[2020, 7.1, 15.0, 4.3, 15.4, 11.6, 23.5, 6.1, 14.0, 2.6, 6.4]]
     assert result == expected_output
 
 
