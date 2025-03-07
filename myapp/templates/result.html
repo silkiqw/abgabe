@@ -313,11 +313,7 @@ const chart = new Chart(ctx, {
     type: 'line',
     data: {
         labels: years,
-        datasets: allDatasets.map(dataset => ({
-            ...dataset,
-            data: replaceNaNWithNull(dataset.data),  // NaN durch null ersetzen
-            spanGaps: true  // Lücken überspringen
-        }))
+        datasets: allDatasets
     },
     options: {
         responsive: true,
@@ -344,6 +340,14 @@ const chart = new Chart(ctx, {
                     text: 'Jahr'
                 }
             }
+        },
+        elements: {
+            line: {
+                tension: 0.4
+            }
+        },
+        parsing: {
+            // Keine spezielle Parsing-Logik für NaN-Werte
         }
     }
 });
