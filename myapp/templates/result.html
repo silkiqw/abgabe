@@ -180,56 +180,88 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
     <script>
         // Chart.js Konfiguration
-        document.addEventListener('DOMContentLoaded', function() {
-            // Daten aus der Tabelle auslesen
-            const table = document.querySelector('.table');
-            const rows = Array.from(table.querySelectorAll('tbody tr'));
+        function interpolateData(dataArray) {
+    const result = [...dataArray]; // Kopie des Arrays erstellen
+    
+    // Durchlaufe das Array und ersetze ungültige Werte durch interpolierte Werte
+    for (let i = 0; i < result.length; i++) {
+        if (isNaN(result[i]) || result[i] === null || result[i] === undefined || result[i] === "nan") {
+            // Finde den nächsten gültigen Wert davor
+            let prevIndex = i - 1;
+            let prevValue = null;
+            while (prevIndex >= 0) {
+                if (!isNaN(result[prevIndex]) && result[prevIndex] !== null && 
+                    result[prevIndex] !== undefined && result[prevIndex] !== "nan") {
+                    prevValue = result[prevIndex];
+                    break;
+                }
+                prevIndex--;
+            }
             
-            const years = rows.map(row => row.cells[0].textContent);
-            const minTemp = rows.map(row => parseFloat(row.cells[1].textContent));
-            const maxTemp = rows.map(row => parseFloat(row.cells[2].textContent));
-            const minSpring = rows.map(row => parseFloat(row.cells[3].textContent));
-            const maxSpring = rows.map(row => parseFloat(row.cells[4].textContent));
-            const minSummer = rows.map(row => parseFloat(row.cells[5].textContent));
-            const maxSummer = rows.map(row => parseFloat(row.cells[6].textContent));
-            const minAutumn = rows.map(row => parseFloat(row.cells[7].textContent));
-            const maxAutumn = rows.map(row => parseFloat(row.cells[8].textContent));
-            const minWinter = rows.map(row => parseFloat(row.cells[9].textContent));
-            const maxWinter = rows.map(row => parseFloat(row.cells[10].textContent));
+            // Finde den nächsten gültigen Wert danach
+            let nextIndex = i + 1;
+            let nextValue = null;
+            while (nextIndex < result.length) {
+                if (!isNaN(result[nextIndex]) && result[nextIndex] !== null && 
+                    result[nextIndex] !== undefined && result[nextIndex] !== "nan") {
+                    nextValue = result[nextIndex];
+                    break;
+                }
+                nextIndex++;
+            }
             
-            const ctx = document.getElementById('temperatureChart').getContext('2d');
-            
-            const datasets = [
-                {
-                    label: 'Jahresminimum',
-                    data: minTemp,
-                    borderColor: 'rgb(0, 112, 192)',
-                    backgroundColor: 'rgba(0, 112, 192, 0.1)',
-                    tension: 0.4,
-                    fill: false,
-                    borderWidth: 2,
-                    group: 'jahr'
-                },
-                {
-                    label: 'Jahresmaximum',
-                    data: maxTemp,
-                    borderColor: 'rgb(255, 0, 0)',
-                    backgroundColor: 'rgba(255, 0, 0, 0.1)',
-                    tension: 0.4,
-                    fill: false,
-                    borderWidth: 2,
-                    group: 'jahr'
-                },
-                {
-                    label: 'Frühlingsminimum',
-                    data: minSpring,
-                    borderColor: 'rgb(0, 100, 0)',
-                    backgroundColor: 'rgba(0, 100, 0, 0.1)',
-                    tension: 0.4,
-                    fill: false,
-                    borderWidth: 2,
-                    group: 'fruhling'
-                },
+            // Interpoliere den Wert, wenn möglich
+            if (prevValue !== null && nextValue !== null) {
+                // Lineare Interpolation
+                result[i] = prevValue + (nextValue - prevValue) * (i - prevIndex) / (nextIndex - prevIndex);
+            } else if (prevValue !== null) {
+                // Verwende den vorherigen Wert, wenn kein nächster verfügbar ist
+                result[i] = prevValue;
+            } else if (nextValue !== null) {
+                // Verwende den nächsten Wert, wenn kein vorheriger verfügbar ist
+                result[i] = nextValue;
+            } else {
+                // Fallback: Setze auf 0, wenn keine gültigen Nachbarwerte verfügbar sind
+                result[i] = 0;
+            }
+        }
+    }
+    
+    return result;
+}
+
+// Daten vorbereiten und interpolieren
+const datasets = [
+    {
+        label: 'Jahresminimum',
+        data: interpolateData(minTemp),
+        borderColor: 'rgb(0, 112, 192)',
+        backgroundColor: 'rgba(0, 112, 192, 0.1)',
+        tension: 0.4,
+        fill: false,
+        borderWidth: 2,
+        group: 'jahr'
+    },
+    {
+        label: 'Jahresmaximum',
+        data: interpolateData(maxTemp),
+        borderColor: 'rgb(255, 0, 0)',
+        backgroundColor: 'rgba(255, 0, 0, 0.1)',
+        tension: 0.4,
+        fill: false,
+        borderWidth: 2,
+        group: 'jahr'
+    },
+    {
+        label: 'Frühlingsminimum',
+        data: interpolateData(minSpring),
+        borderColor: 'rgb(0, 100, 0)',
+        backgroundColor: 'rgba(0, 100, 0, 0.1)',
+        tension: 0.4,
+        fill: false,
+        borderWidth: 2,
+        group: 'fruhling'
+    },
                 {
                     label: 'Frühlingsmaximum',
                     data: maxSpring,
