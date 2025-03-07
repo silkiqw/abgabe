@@ -103,8 +103,8 @@ def test_distance(lat1, lon1, lat2, lon2, expected):
     assert pytest.approx(result, rel=1e-2) == expected # Toleranz ±1%
 
 @pytest.mark.parametrize("lat1, lon1, lat2, lon2, expected", [
-    (500000, 800000, 500100, 800000, True),   # 11 km → innerhalb 50 km
-    (500000, 800000, 505000, 805000, False)   # 785 km → außerhalb 50 km
+    (50.0000, 8.0000, 50.1000, 8.0000, True),  # Etwa 11 km → innerhalb 50 km
+    (50.0000, 8.0000, 55.0000, 13.0000, False)  # Mehrere hundert km → außerhalb 50 km
 ])
 def test_is_within_rad(lat1, lon1, lat2, lon2, expected):
     # Test für is_within_rad innerhalb Radius
