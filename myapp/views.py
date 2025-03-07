@@ -116,21 +116,29 @@ def fetch_data(station_id, years):     #Zugriff auf die Daten der webseite
     records = []
     for year in years:
         lines = response.text.split("\n")
+
+        print("Lines from response:")
+        print(lines)  # Zeigt alle Zeilen, die aus der Antwort gesplittet wurden
         
         for line in lines:
             if len(line) < 20:
                 continue
             record_year = line[11:15].strip()
+            print(f"Extracted year: {record_year}")
             if record_year == str(year):
                 record_type = line[17:21].strip()
+                print(f"Extracted record type: {record_type}")
                 if record_type == "TMIN" or record_type == "TMAX":
                     for i in range(21, len(line), 8):
                         day_value = line[i:i+5].strip()
+                        print(f"Extracted day value: {day_value}")
                         if day_value.lstrip("-").isdigit():
                             if int(day_value) != -9999:
                                 month = int(line[15:17].strip())
+                                print(f"Extracted month: {month}")
                                 value = int(day_value) / 10
                                 season = get_season(month)
+                                 print(f"Season: {season}, Value: {value}")
                                 records.append((record_year, record_type, season, value))
     
     df = pandas.DataFrame(records, columns=["Year", "Type","Season", "Value"])
