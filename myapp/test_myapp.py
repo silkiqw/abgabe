@@ -227,27 +227,28 @@ def test_check_outside_radius(mock_is_within_rad, mock_read_stations, mock_rende
 def test_fetch_data(mock_get_season, mock_get):
     # Simuliere eine erfolgreiche HTTP-Antwort
     mock_get.return_value.status_code = 200
-
+    
     # Simulierte Wetterdaten (angepasst an das erwartete Format)
     mock_data = """
 USW00094728  2020 01 TMAX   50   60   70   80   90  100  110  120  130  140  150  160  170  180  190  200  210  220  230  240  250  260  270  280  290  300  310  320  330  340  350
 USW00094728  2020 01 TMIN  -50  -40  -30  -20  -10    0   10   20   30   40   50   60   70   80   90  100  110  120  130  140  150  160  170  180  190  200  210  220  230  240  250
     """
     mock_get.return_value.text = mock_data
-
+    
     # Setze Cache-Wert für lat (da get_season ihn verwendet)
     cache.set("lat", 50.0)
-
+    
     # Führe die Funktion aus
     result = fetch_data("USW00094728", [2020])
     print("Fetch data result:", result)  # Debugging-Ausgabe
-
+    
     # Teste, ob das Ergebnis eine Liste ist
-    assert isinstance(result, list)
-
+    assert isinstance(result, list)  # Dieser Test könnte fehlschlagen, wenn keine Daten vorhanden sind
+    
     # Teste, ob das Ergebnis die erwartete Struktur hat
     expected_output = [[2020, 10.0, 20.0, None, None, None, None, None, None, None, None]]
     assert result == expected_output
+
 
 @patch("requests.get")
 def test_fetch_data_error(mock_get):
