@@ -160,7 +160,7 @@ def test_read_stations_error(mock_file):
     # Test für read_stations mit Fehler
     assert read_stations() == []
 
-@patch("myapp.views.read_stations", return_value="ID1 50.0 10.0 TMAX 2000 2020\nID2 60.0 20.0 TMIN 2001 2021")
+@patch("myapp.views.read_stations", return_value="ID1        50.0     10.0     TMAX 2000 2020\nID2        60.0     20.0     TMIN 2001 2021")
 @patch("myapp.views.is_within_rad", return_value=True)
 @patch("myapp.views.get_name", return_value="TestStation")
 def test_check_within_radius(mock_get_name, mock_is_within_rad, mock_read_stations):
