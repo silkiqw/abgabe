@@ -35,11 +35,7 @@ def filter_duplicates(lst):
     return [x for x in lst if lst.count(x) > 1]
 
 def remove_duplicates(lst):
-    l_new = []
-    for l in range(len(lst)):
-        if l % 2 == 0:
-            l_new.append(lst[l])
-    return l_new
+    return list(dict.fromkeys(lst))
 
 def get_names(lst):
     with open(os.path.join(settings.BASE_DIR, "data", "station.csv"), mode='r', encoding='utf-8') as file:#Zugriff stations.csv
