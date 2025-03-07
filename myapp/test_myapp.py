@@ -224,27 +224,30 @@ def test_check_outside_radius(mock_is_within_rad, mock_read_stations, mock_rende
 @patch("requests.get")
 @patch("myapp.views.get_season", return_value="Spring")  # Patche auch get_season
 def test_fetch_data(mock_get_season, mock_get):
-    # Test für fetch_data
+    # Simuliere eine erfolgreiche HTTP-Antwort
     mock_get.return_value.status_code = 200
-    # Formatieren Sie die Daten genau so, wie sie in der Funktion erwartet werden
+
+    # Simulierte Wetterdaten (angepasst an das erwartete Format)
     mock_data = """
-ID12020010TMAX0010000000
-ID12020010TMIN0020000000
+USW00094728  2020 01 TMAX   50   60   70   80   90  100  110  120  130  140  150  160  170  180  190  200  210  220  230  240  250  260  270  280  290  300  310  320  330  340  350
+USW00094728  2020 01 TMIN  -50  -40  -30  -20  -10    0   10   20   30   40   50   60   70   80   90  100  110  120  130  140  150  160  170  180  190  200  210  220  230  240  250
 """
     mock_get.return_value.text = mock_data
-    
-    # Cache-Wert für lat setzen, da get_season ihn verwendet
-    from django.core.cache import cache
+
+    # Setze Cache-Wert für lat (da get_season ihn verwendet)
     cache.set("lat", 50.0)
-    
-    result = fetch_data("ID1", [2020])
-    print("Fetch data result:", result)
-    
-    # Falls result eine Fehlermeldung ist, nicht weitertesten
+
+    # Führe die Funktion aus
+    result = fetch_data("USW00094728", [2020])
+    print("Fetch data result:", result)  # Debugging
+
+    # Falls ein Fehler zurückkommt, Test abbrechen
     if isinstance(result, str):
         pytest.fail(f"fetch_data gab eine Fehlermeldung zurück: {result}")
-    
-    expected_output = [[2020, 10.0, 20.0, None, None, None, None, None, None, None, None]]
+
+    # Erwartetes Ergebnis mit abgerundeten Werten (anpassen, falls nötig)
+    expected_output = [[2020, 5.0, 25.0, 5.0, 25.0, 5.0, 25.0, 5.0, 25.0, 5.0, 25.0]]
+
     assert result == expected_output
 
 @patch("requests.get")
