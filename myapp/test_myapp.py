@@ -10,6 +10,7 @@ import requests
 import django.core.cache as cache
 from django.test import TestCase
 from django.http import HttpResponse
+from django.shortcuts import render
 from unittest.mock import patch, mock_open
 from django.conf import settings
 from django.test import RequestFactory
