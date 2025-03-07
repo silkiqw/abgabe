@@ -227,13 +227,24 @@ def test_fetch_data(mock_get_season, mock_get):
     # Test für fetch_data
     mock_get.return_value.status_code = 200
     # Formatieren Sie die Daten genau so, wie sie in der Funktion erwartet werden
-    mock_get.return_value.text = "ID12020010TMAX0010000000\nID12020010TMIN0020000000"
-    expected_output = [[2020, 10.0, 20.0, None, None, None, None, None, None, None, None]]
+    mock_data = """
+ID12020010TMAX0010000000
+ID12020010TMIN0020000000
+"""
+    mock_get.return_value.text = mock_data
     
-    # Füge Debugging hinzu
+    # Cache-Wert für lat setzen, da get_season ihn verwendet
+    from django.core.cache import cache
+    cache.set("lat", 50.0)
+    
     result = fetch_data("ID1", [2020])
     print("Fetch data result:", result)
     
+    # Falls result eine Fehlermeldung ist, nicht weitertesten
+    if isinstance(result, str):
+        pytest.fail(f"fetch_data gab eine Fehlermeldung zurück: {result}")
+    
+    expected_output = [[2020, 10.0, 20.0, None, None, None, None, None, None, None, None]]
     assert result == expected_output
 
 @patch("requests.get")
