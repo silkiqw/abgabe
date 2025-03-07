@@ -135,7 +135,7 @@ class RemoveDuplicatesTest(TestCase):
 
     def test_no_duplicates(self):
         input_list = [1, 2, 3]
-        expected_output = [1, 3]
+        expected_output = [1, 2, 3]
         self.assertEqual(remove_duplicates(input_list), expected_output)
 
 # Tests für get_names
