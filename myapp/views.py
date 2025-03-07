@@ -38,14 +38,12 @@ def remove_duplicates(lst):
     return list(dict.fromkeys(lst))
 
 def get_names(lst):
-    with open(os.path.join(settings.BASE_DIR, "data", "station.csv"), mode='r', encoding='utf-8') as file:#Zugriff stations.csv
-            reader = csv.reader(file)
-            data = list(reader)
-            for i in range(1, 128025):
-                for l in lst:
-                    if data[i][0] == str(l[0]):
-                        l.append(data[i][4]) 
-            return lst
+    for item in lst:
+        station_id = item[0]
+        name = get_name(station_id)
+        if name:  # Nur anhängen, wenn ein Name gefunden wurde
+            item.append(name)
+    return lst
 
 def read_stations():
     try:
