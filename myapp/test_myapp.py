@@ -183,6 +183,12 @@ def test_check_within_radius(mock_get_names, mock_remove_duplicates, mock_filter
     })
     
     response = check(request)
+    print("Response:", response)
+    print("Mock render called:", mock_render.called)
+    print("Mock render call args:", mock_render.call_args)
+    print("Render called:", mock_render.called)
+    print("is_within_rad called:", mock_is_within_rad.called)
+    print("read_stations called:", mock_read_stations.called)
     
     # Assert that render was called with the expected context
     mock_render.assert_called_once()
