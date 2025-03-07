@@ -117,9 +117,12 @@
         <li class="nav-item">
             <a class="nav-link {% if request.resolver_match.url_name == 'index' %}active{% endif %}" href="{% url 'index' %}">DatenInput</a>
         </li>
+        <form action="{% url 'back_data' %}"  method="post">
+            {% csrf_token %}
         <li class="nav-item">
-            <a class="nav-link {% if request.resolver_match.url_name == 'result' %}active{% endif %}" href="{% url 'result' %}">Wetterstationdetails</a>
+            <button class="nav-link" type="submit">Wetterstationdetails</button>
         </li>
+        </form>
     </ul>
         <form action="{% url 'check' %}" method="post">
             {% csrf_token %}
