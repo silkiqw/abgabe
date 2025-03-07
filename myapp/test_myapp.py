@@ -225,7 +225,8 @@ def test_check_outside_radius(mock_is_within_rad, mock_read_stations, mock_rende
 def test_fetch_data(mock_get):
     # Test für fetch_data
     mock_get.return_value.status_code = 200
-    mock_get.return_value.text = "2020 01 01 TMAX 100\n2020 01 02 TMIN 200"
+    # Formatieren Sie die Daten im richtigen Format
+    mock_get.return_value.text = "ID12020010TMAX 100 -9999 -9999 -9999 -9999\nID12020010TMIN 200 -9999 -9999 -9999 -9999"
     expected_output = [[2020, 10.0, 20.0, None, None, None, None, None, None, None, None]]
     assert fetch_data("ID1", [2020]) == expected_output
 
