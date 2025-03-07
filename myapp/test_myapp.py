@@ -321,4 +321,5 @@ def test_get_name(mock_reader, mock_range, mock_file):
 @patch("builtins.open", side_effect=Exception("Fehler beim Lesen der Datei"))
 def test_get_name_error(mock_file):
     # Test für get_name mit Fehler
-    assert get_name("ID1") is None
+    with pytest.raises(Exception):
+        get_name("ID1")
