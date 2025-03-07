@@ -304,42 +304,45 @@
             
             // Alle Datasets kopieren, um mit den Originalwerten zu arbeiten
             const allDatasets = JSON.parse(JSON.stringify(datasets));
-            
-            // Chart erstellen
-            const chart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: years,
-                    datasets: datasets
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        title: {
-                            display: false
-                        },
-                        legend: {
-                            position: 'top',
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: false,
-                            title: {
-                                display: true,
-                                text: 'Temperatur (°C)'
-                            }
-                        },
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'Jahr'
-                            }
-                        }
-                    }
+
+// Chart erstellen
+const chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: years,
+        datasets: allDatasets.map(dataset => ({
+            ...dataset,
+            spanGaps: true  // Diese Zeile sorgt dafür, dass Lücken in den Daten übersprungen und die Linie fortgesetzt wird
+        }))
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            title: {
+                display: false
+            },
+            legend: {
+                position: 'top',
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: false,
+                title: {
+                    display: true,
+                    text: 'Temperatur (°C)'
                 }
-            });
+            },
+            x: {
+                title: {
+                    display: true,
+                    text: 'Jahr'
+                }
+            }
+        }
+    }
+});
             
             // Funktionalität für Hervorheben der Serien
             document.querySelectorAll('.series-toggle').forEach(button => {
