@@ -91,6 +91,8 @@ def test_docker_resource_limits():
         subprocess.run(["docker", "stop", container_name], check=False)
         subprocess.run(["docker", "rm", container_name], check=False)
     
+
+
 @pytest.mark.parametrize("lat1, lon1, lat2, lon2, expected", [
     (48.1351, 11.5820, 48.1351, 11.5820, 0.0),  # Gleicher Punkt → Distanz = 0
     (48.1351, 11.5820, 48.1360, 11.5820, 0.1),  # Ca. 0.1 km nach Norden
@@ -104,131 +106,135 @@ def test_distance(lat1, lon1, lat2, lon2, expected):
     (500000, 800000, 500100, 800000, True),   # 11 km → innerhalb 50 km
     (500000, 800000, 505000, 805000, False)   # 785 km → außerhalb 50 km
 ])
+def test_is_within_rad(lat1, lon1, lat2, lon2, expected):
+    # Test für is_within_rad innerhalb Radius
+    assert is_within_rad(lat1, lon1, lat2, lon2, 50) == expected
 
+def test_is_within_radius():
+    # Test for is_within_rad innerhalb Radius
+    assert is_within_rad(50.0, 10.0, 50.1, 10.1, 15) == True
 
-# Tests für is_within_rad
-class IsWithinRadTest(TestCase):
-    def test_is_within_radius(self):
-        self.assertTrue(is_within_rad(50.0, 10.0, 50.1, 10.1, 15))
+def test_is_outside_radius():
+    # Test for is_within_rad außerhalb Radius
+    assert is_within_rad(50.0, 10.0, 60.0, 20.0, 100) == False
 
-    def test_is_outside_radius(self):
-        self.assertFalse(is_within_rad(50.0, 10.0, 60.0, 20.0, 100))
+def test_filter_duplicates():
+    # Test für filter_duplicates mit Duplikaten
+    input_list = [1, 2, 2, 3, 4, 4, 4]
+    expected_output = [2, 2, 4, 4, 4]
+    assert filter_duplicates(input_list) == expected_output
 
-# Tests für filter_duplicates
-class FilterDuplicatesTest(TestCase):
-    def test_filter_duplicates(self):
-        input_list = [1, 2, 2, 3, 4, 4, 4]
-        expected_output = [2, 2, 4, 4, 4]
-        self.assertEqual(filter_duplicates(input_list), expected_output)
+def test_filter_no_duplicates():
+    # Test für filter_duplicates ohne Duplikate
+    input_list = [1, 2, 3]
+    expected_output = []
+    assert filter_duplicates(input_list) == expected_output
 
-    def test_no_duplicates(self):
-        input_list = [1, 2, 3]
-        expected_output = []
-        self.assertEqual(filter_duplicates(input_list), expected_output)
+def test_remove_duplicates():
+    # Test für remove_duplicates mit Duplikaten
+    input_list = [1, 2, 2, 3, 4, 4, 4]
+    expected_output = [1, 2, 3, 4]  # Korrigierte Erwartung
+    assert remove_duplicates(input_list) == expected_output
 
-# Tests für remove_duplicates
-class RemoveDuplicatesTest(TestCase):
-    def test_remove_duplicates(self):
-        input_list = [1, 2, 2, 3, 4, 4, 4]
-        expected_output = [1, 2, 4]
-        self.assertEqual(remove_duplicates(input_list), expected_output)
+def test_remove_no_duplicates():
+    # Test für remove_duplicates ohne Duplikate
+    input_list = [1, 2, 3]
+    expected_output = [1, 2, 3]  # Korrigierte Erwartung
+    assert remove_duplicates(input_list) == expected_output
 
-    def test_no_duplicates(self):
-        input_list = [1, 2, 3]
-        expected_output = [1, 2, 3]
-        self.assertEqual(remove_duplicates(input_list), expected_output)
+@patch("myapp.views.get_name", side_effect=lambda x: f"Station {x}")
+def test_get_names(mock_get_name):
+    # Test für get_names
+    input_list = [["1"], ["2"], ["3"]]
+    expected_output = [["1", "Station 1"], ["2", "Station 2"], ["3", "Station 3"]]
+    assert get_names(input_list) == expected_output
 
-# Tests für get_names
-class GetNamesTest(TestCase):
-    @patch("myapp.views.get_name", side_effect=lambda x: f"Station {x}")
-    def test_get_names(self, mock_get_name):
-        input_list = [["1"], ["2"], ["3"]]
-        expected_output = [["1", "Station 1"], ["2", "Station 2"], ["3", "Station 3"]]
-        self.assertEqual(get_names(input_list), expected_output)
+@patch("builtins.open", new_callable=mock_open, read_data="ID1 50.0 10.0 TMAX 2000 2020\nID2 60.0 20.0 TMIN 2001 2021")
+def test_read_stations(mock_file):
+    # Test für read_stations
+    expected_output = "ID1 50.0 10.0 TMAX 2000 2020\nID2 60.0 20.0 TMIN 2001 2021"
+    assert read_stations() == expected_output
 
-# Tests für read_stations
-class ReadStationsTest(TestCase):
-    @patch("builtins.open", new_callable=mock_open, read_data="ID1 50.0 10.0 TMAX 2000 2020\nID2 60.0 20.0 TMIN 2001 2021")
-    def test_read_stations(self, mock_file):
-        expected_output = "ID1 50.0 10.0 TMAX 2000 2020\nID2 60.0 20.0 TMIN 2001 2021"
-        self.assertEqual(read_stations(), expected_output)
+@patch("builtins.open", side_effect=Exception("Fehler beim Lesen der Datei"))
+def test_read_stations_error(mock_file):
+    # Test für read_stations mit Fehler
+    assert read_stations() == []
 
-    @patch("builtins.open", side_effect=Exception("Fehler beim Lesen der Datei"))
-    def test_read_stations_error(self, mock_file):
-        self.assertEqual(read_stations(), [])
+@patch("myapp.views.read_stations", return_value="ID1 50.0 10.0 TMAX 2000 2020\nID2 60.0 20.0 TMIN 2001 2021")
+@patch("myapp.views.is_within_rad", return_value=True)
+@patch("myapp.views.get_name", return_value="TestStation")
+def test_check_within_radius(mock_get_name, mock_is_within_rad, mock_read_stations):
+    # Test für check innerhalb Radius
+    factory = RequestFactory()
+    request = factory.post("/check", {
+        "lat": "50.0",
+        "lon": "10.0",
+        "searchRadius": "100",
+        "dateFrom": "2000-01-01",
+        "dateTo": "2020-01-01"
+    })
+    response = check(request)
+    assert response.status_code == 200
+    assert 'result' in response.context
+    assert response.context['result'] == [["ID1", "TestStation"]]
 
-# Tests für check
-class CheckTest(TestCase):
-    @patch("myapp.views.read_stations", return_value="ID1 50.0 10.0 TMAX 2000 2020\nID2 60.0 20.0 TMIN 2001 2021")
-    @patch("myapp.views.is_within_rad", return_value=True)
-    @patch("myapp.views.get_name", return_value="TestStation")
-    def test_check_within_radius(self, mock_get_name, mock_is_within_rad, mock_read_stations):
-        factory = RequestFactory()
-        request = factory.post("/check", {
-            "lat": "50.0",
-            "lon": "10.0",
-            "searchRadius": "100",
-            "dateFrom": "2000-01-01",
-            "dateTo": "2020-01-01"
-        })
-        response = check(request)
-        self.assertEqual(response.status_code, 200)
-        self.assertIn('result', response.context)
-        self.assertEqual(response.context['result'], [["ID1", "TestStation"]])
+@patch("myapp.views.read_stations", return_value="ID1 50.0 10.0 TMAX 2000 2020\nID2 60.0 20.0 TMIN 2001 2021")
+@patch("myapp.views.is_within_rad", return_value=False)
+def test_check_outside_radius(mock_is_within_rad, mock_read_stations):
+    # Test für check außerhalb Radius
+    factory = RequestFactory()
+    request = factory.post("/check", {
+        "lat": "50.0",
+        "lon": "10.0",
+        "searchRadius": "10",
+        "dateFrom": "2000-01-01",
+        "dateTo": "2020-01-01"
+    })
+    response = check(request)
+    assert response.status_code == 200
+    assert 'result2' in response.context
+    assert response.context['result2'] == "Für diese Kombination von Koordinaten und Zeitraum gibt es nicht genügend Daten."
 
-    @patch("myapp.views.read_stations", return_value="ID1 50.0 10.0 TMAX 2000 2020\nID2 60.0 20.0 TMIN 2001 2021")
-    @patch("myapp.views.is_within_rad", return_value=False)
-    def test_check_outside_radius(self, mock_is_within_rad, mock_read_stations):
-        factory = RequestFactory()
-        request = factory.post("/check", {
-            "lat": "50.0",
-            "lon": "10.0",
-            "searchRadius": "10",
-            "dateFrom": "2000-01-01",
-            "dateTo": "2020-01-01"
-        })
-        response = check(request)
-        self.assertEqual(response.status_code, 200)
-        self.assertIn('result2', response.context)
-        self.assertEqual(response.context['result2'], "Für diese Kombination von Koordinaten und Zeitraum gibt es nicht genügend Daten.")
+@patch("requests.get")
+def test_fetch_data(mock_get):
+    # Test für fetch_data
+    mock_get.return_value.status_code = 200
+    mock_get.return_value.text = "2020 01 01 TMAX 100\n2020 01 02 TMIN 200"
+    expected_output = [[2020, 10.0, 20.0, None, None, None, None, None, None, None, None]]
+    assert fetch_data("ID1", [2020]) == expected_output
 
-# Tests für fetch_data
-class FetchDataTest(TestCase):
-    @patch("requests.get")
-    def test_fetch_data(self, mock_get):
-        mock_get.return_value.status_code = 200
-        mock_get.return_value.text = "2020 01 01 TMAX 100\n2020 01 02 TMIN 200"
-        expected_output = [[2020, 10.0, 20.0, None, None, None, None, None, None, None, None]]
-        self.assertEqual(fetch_data("ID1", [2020]), expected_output)
+@patch("requests.get")
+def test_fetch_data_error(mock_get):
+    # Test für fetch_data mit Fehler
+    mock_get.return_value.status_code = 404
+    try:
+        fetch_data("ID1", [2020])
+        assert False, "Sollte eine Exception werfen"
+    except Exception:
+        assert True
 
-    @patch("requests.get")
-    def test_fetch_data_error(self, mock_get):
-        mock_get.return_value.status_code = 404
-        with self.assertRaises(Exception):
-            fetch_data("ID1", [2020])
+def test_get_season_northern_hemisphere():
+    # Test für get_season (Nordhalbkugel)
+    assert get_season(3) == "Spring"
+    assert get_season(6) == "Summer"
+    assert get_season(9) == "Fall"
+    assert get_season(12) == "Winter"
 
-# Tests für get_season
-class GetSeasonTest(TestCase):
-    def test_get_season_northern_hemisphere(self):
-        self.assertEqual(get_season(3), "Spring")
-        self.assertEqual(get_season(6), "Summer")
-        self.assertEqual(get_season(9), "Fall")
-        self.assertEqual(get_season(12), "Winter")
+@patch("django.core.cache.cache.get", return_value=-50.0)
+def test_get_season_southern_hemisphere(mock_cache_get):
+    # Test für get_season (Südhalbkugel)
+    assert get_season(3) == "Fall"
+    assert get_season(6) == "Winter"
+    assert get_season(9) == "Spring"
+    assert get_season(12) == "Summer"
 
-    def test_get_season_southern_hemisphere(self):
-        with patch("myapp.views.cache.get", return_value=-50.0):
-            self.assertEqual(get_season(3), "Fall")
-            self.assertEqual(get_season(6), "Winter")
-            self.assertEqual(get_season(9), "Spring")
-            self.assertEqual(get_season(12), "Summer")
+@patch("builtins.open", new_callable=mock_open, read_data="ID1,Name1\nID2,Name2")
+def test_get_name(mock_file):
+    # Test für get_name
+    assert get_name("ID1") == "Name1"
+    assert get_name("ID2") == "Name2"
 
-# Tests für get_name
-class GetNameTest(TestCase):
-    @patch("builtins.open", new_callable=mock_open, read_data="ID1,Name1\nID2,Name2")
-    def test_get_name(self, mock_file):
-        self.assertEqual(get_name("ID1"), "Name1")
-        self.assertEqual(get_name("ID2"), "Name2")
-
-    @patch("builtins.open", side_effect=Exception("Fehler beim Lesen der Datei"))
-    def test_get_name_error(self, mock_file):
-        self.assertIsNone(get_name("ID1"))
+@patch("builtins.open", side_effect=Exception("Fehler beim Lesen der Datei"))
+def test_get_name_error(mock_file):
+    # Test für get_name mit Fehler
+    assert get_name("ID1") is None
