@@ -305,6 +305,9 @@
             // Alle Datasets kopieren, um mit den Originalwerten zu arbeiten
             const allDatasets = JSON.parse(JSON.stringify(datasets));
 
+// Funktion, um NaN-Werte zu null zu machen
+const replaceNaNWithNull = (data) => data.map(value => (isNaN(value) ? null : value));
+
 // Chart erstellen
 const chart = new Chart(ctx, {
     type: 'line',
@@ -312,7 +315,8 @@ const chart = new Chart(ctx, {
         labels: years,
         datasets: allDatasets.map(dataset => ({
             ...dataset,
-            spanGaps: true  // Diese Zeile sorgt dafür, dass Lücken in den Daten übersprungen und die Linie fortgesetzt wird
+            data: replaceNaNWithNull(dataset.data),  // NaN durch null ersetzen
+            spanGaps: true  // Lücken überspringen
         }))
     },
     options: {
