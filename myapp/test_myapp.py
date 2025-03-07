@@ -166,12 +166,11 @@ def test_read_stations_error(mock_file):
     "ID2        60.0      20.0      TMIN 2001 2021"
 ))
 @patch("myapp.views.is_within_rad", return_value=True)
-@patch("myapp.views.get_name", return_value="TestStation")
-def test_check_within_radius(mock_get_name, mock_is_within_rad, mock_read_stations, mock_render):
-    # Configure mock_render to return a response with context
-    mock_render.return_value = HttpResponse()
-    mock_render.return_value.context = {'result': [["ID1", "TestStation"]]}
-    
+@patch("myapp.views.filter_duplicates", return_value=[["ID1"]])
+@patch("myapp.views.remove_duplicates", return_value=[["ID1"]])
+@patch("myapp.views.get_names", return_value=[["ID1", "TestStation"]])
+def test_check_within_radius(mock_get_names, mock_remove_duplicates, mock_filter_duplicates, 
+                             mock_is_within_rad, mock_read_stations, mock_render):
     # Test für check innerhalb Radius
     factory = RequestFactory()
     request = factory.post("/check", {
