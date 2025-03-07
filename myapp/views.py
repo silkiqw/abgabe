@@ -35,7 +35,11 @@ def filter_duplicates(lst):
     return [x for x in lst if lst.count(x) > 1]
 
 def remove_duplicates(lst):
-    return list(dict.fromkeys(lst))
+    l_new = []
+    for l in range(len(lst)):
+        if l % 2 == 0:
+            l_new.append(lst[l])
+    return l_new
 
 def get_names(lst):
     for item in lst:
