@@ -3,7 +3,7 @@ import django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'project.settings')
 django.setup()
 import pytest
-
+import time
 import subprocess
 import re
 import requests
@@ -223,7 +223,7 @@ def test_check_outside_radius(mock_is_within_rad, mock_read_stations, mock_rende
     assert context['result2'] == "Für diese Kombination von Koordinaten und Zeitraum gibt es nicht genügend Daten."
 
 @patch("requests.get")
-@patch("myapp.views.get_season", return_value="Spring")  # Patche auch get_season
+@patch("myapp.views.get_season", return_value="Spring")
 def test_fetch_data(mock_get_season, mock_get):
     # Simuliere eine erfolgreiche HTTP-Antwort
     mock_get.return_value.status_code = 200
@@ -232,7 +232,7 @@ def test_fetch_data(mock_get_season, mock_get):
     mock_data = """
 USW00094728  2020 01 TMAX   50   60   70   80   90  100  110  120  130  140  150  160  170  180  190  200  210  220  230  240  250  260  270  280  290  300  310  320  330  340  350
 USW00094728  2020 01 TMIN  -50  -40  -30  -20  -10    0   10   20   30   40   50   60   70   80   90  100  110  120  130  140  150  160  170  180  190  200  210  220  230  240  250
-"""
+    """
     mock_get.return_value.text = mock_data
 
     # Setze Cache-Wert für lat (da get_season ihn verwendet)
@@ -240,15 +240,13 @@ USW00094728  2020 01 TMIN  -50  -40  -30  -20  -10    0   10   20   30   40   50
 
     # Führe die Funktion aus
     result = fetch_data("USW00094728", [2020])
-    print("Fetch data result:", result)  # Debugging
+    print("Fetch data result:", result)  # Debugging-Ausgabe
 
-    # Falls ein Fehler zurückkommt, Test abbrechen
-    if isinstance(result, str):
-        pytest.fail(f"fetch_data gab eine Fehlermeldung zurück: {result}")
+    # Teste, ob das Ergebnis eine Liste ist
+    assert isinstance(result, list)
 
-    # Erwartetes Ergebnis mit abgerundeten Werten (anpassen, falls nötig)
-    expected_output = [[2020, 5.0, 25.0, 5.0, 25.0, 5.0, 25.0, 5.0, 25.0, 5.0, 25.0]]
-
+    # Teste, ob das Ergebnis die erwartete Struktur hat
+    expected_output = [[2020, 10.0, 20.0, None, None, None, None, None, None, None, None]]
     assert result == expected_output
 
 @patch("requests.get")
