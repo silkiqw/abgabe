@@ -161,7 +161,7 @@ def test_read_stations_error(mock_file):
     # Test für read_stations mit Fehler
     assert read_stations() == []
 
-@patch("django.shortcuts.render")
+@patch("myapp.views.render", return_value=HttpResponse())
 @patch("myapp.views.read_stations", return_value=(
     "ID1        50.0      10.0      TMAX 2000 2020\n"
     "ID2        60.0      20.0      TMIN 2001 2021"
@@ -170,8 +170,8 @@ def test_read_stations_error(mock_file):
 @patch("myapp.views.filter_duplicates", return_value=[["ID1"]])
 @patch("myapp.views.remove_duplicates", return_value=[["ID1"]])
 @patch("myapp.views.get_names", return_value=[["ID1", "TestStation"]])
-def test_check_within_radius(mock_get_names, mock_remove_duplicates, mock_filter_duplicates, 
-                             mock_is_within_rad, mock_read_stations, mock_render):
+def test_check_within_radius(mock_get_names, mock_remove_duplicates, mock_filter_duplicates,
+                           mock_is_within_rad, mock_read_stations, mock_render):
     # Test für check innerhalb Radius
     factory = RequestFactory()
     request = factory.post("/check", {
