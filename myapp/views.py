@@ -42,9 +42,14 @@ def remove_duplicates(lst):
     return l_new
 
 def get_names(lst):
-    for l in lst:
-        l.append(get_name(l[0]))
-    return lst
+    with open(os.path.join(settings.BASE_DIR, "data", "station.csv"), mode='r', encoding='utf-8') as file:#Zugriff stations.csv
+            reader = csv.reader(file)
+            data = list(reader)
+            for i in range(1, 128025):
+                for l in lst:
+                    if data[i][0] == str(l[0]):
+                        l.append(data[i][4]) 
+            return lst
 
 def read_stations():
     try:
