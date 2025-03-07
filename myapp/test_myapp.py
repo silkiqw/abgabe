@@ -222,13 +222,19 @@ def test_check_outside_radius(mock_is_within_rad, mock_read_stations, mock_rende
     assert context['result2'] == "Für diese Kombination von Koordinaten und Zeitraum gibt es nicht genügend Daten."
 
 @patch("requests.get")
-def test_fetch_data(mock_get):
+@patch("myapp.views.get_season", return_value="Spring")  # Patche auch get_season
+def test_fetch_data(mock_get_season, mock_get):
     # Test für fetch_data
     mock_get.return_value.status_code = 200
-    # Formatieren Sie die Daten im richtigen Format
-    mock_get.return_value.text = "ID12020010TMAX 100 -9999 -9999 -9999 -9999\nID12020010TMIN 200 -9999 -9999 -9999 -9999"
+    # Formatieren Sie die Daten genau so, wie sie in der Funktion erwartet werden
+    mock_get.return_value.text = "ID12020010TMAX0010000000\nID12020010TMIN0020000000"
     expected_output = [[2020, 10.0, 20.0, None, None, None, None, None, None, None, None]]
-    assert fetch_data("ID1", [2020]) == expected_output
+    
+    # Füge Debugging hinzu
+    result = fetch_data("ID1", [2020])
+    print("Fetch data result:", result)
+    
+    assert result == expected_output
 
 @patch("requests.get")
 def test_fetch_data_error(mock_get):
