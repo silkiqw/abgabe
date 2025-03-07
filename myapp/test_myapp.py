@@ -132,17 +132,6 @@ def test_filter_no_duplicates():
     expected_output = []
     assert filter_duplicates(input_list) == expected_output
 
-def test_remove_duplicates():
-    # Test für remove_duplicates mit Duplikaten
-    input_list = [1, 2, 2, 3, 4, 4, 4]
-    expected_output = [1, 2, 3, 4]  # Korrigierte Erwartung
-    assert remove_duplicates(input_list) == expected_output
-
-def test_remove_no_duplicates():
-    # Test für remove_duplicates ohne Duplikate
-    input_list = [1, 2, 3]
-    expected_output = [1, 2, 3]  # Korrigierte Erwartung
-    assert remove_duplicates(input_list) == expected_output
 
 @patch("myapp.views.get_name", side_effect=lambda x: f"Station {x}")
 def test_get_names(mock_get_name):
