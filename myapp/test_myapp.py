@@ -197,7 +197,7 @@ def test_check_within_radius(mock_get_names, mock_remove_duplicates, mock_filter
     assert context['result'] == [["ID1", "TestStation"]]
 
 @patch("django.shortcuts.render")
-@patch("myapp.views.read_stations", return_value="ID1 50.0 10.0 TMAX 2000 2020\nID2 60.0 20.0 TMIN 2001 2021")
+@patch("myapp.views.read_stations", return_value="ID1        50.0      10.0      TMAX 2000 2020\nID2        60.0      20.0      TMIN 2001 2021")
 @patch("myapp.views.is_within_rad", return_value=False)
 def test_check_outside_radius(mock_is_within_rad, mock_read_stations, mock_render):
     # Configure mock_render to return a response with context
