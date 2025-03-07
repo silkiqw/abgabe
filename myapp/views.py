@@ -57,6 +57,8 @@ def read_stations():
         print("Fehler beim Lesen der Datei:", e)
         return []
     
+def sort_by_dist(lst):
+    return sorted(lst, key=lambda l: l[1])
 
 
 def check(request):
@@ -67,6 +69,7 @@ def check(request):
         cache.set("lat",lat,timeout=3600)
         start_date = int(request.POST.get("dateFrom")[:4])
         end_date = int(request.POST.get("dateTo")[:4])
+        inputs = [lat, lon, start_date, end_date, rad]
         years = []
         date = start_date
         while date <= end_date:
@@ -87,16 +90,17 @@ def check(request):
                 end = int(line[41:45].strip())
                 if element in ("TMIN", "TMAX") and start <= int(start_date) and end >= int(end_date):
                     if (is_within_rad(lat, lon, station_lat, station_lon, rad)):
-                        stations.append([station_id])
+                        stations.append([station_id, round(distance(lat, lon, station_lat, station_lon),1)])
         stations = filter_duplicates(stations)
         stations = remove_duplicates(stations)
         stations = get_names(stations)
+        stations = sort_by_dist(stations)
         cache.set("stations", stations, timeout=3600)
 
         if(len(stations) == 0):#check ob leere Liste -> keine Treffer
             return render(request, 'index.html', {'result2': "Für diese Kombination von Koordinaten und Zeitraum gibt es nicht genügend Daten."})
         else:
-            return render(request, 'index.html', {'result': stations})
+            return render(request, 'index.html', {'result': stations, "inputs": inputs})
             
 
 def result(request):    #Anzeigen der Stationsdaten
