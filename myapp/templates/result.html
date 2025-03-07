@@ -169,7 +169,10 @@
         
         <!-- Footer -->
         <div class="mt-4">
-            <a href="{% url 'index' %}" class="footer-btn">Startseite</a>
+            <form action="{% url 'back' %}"  method="post">
+                {% csrf_token %}
+                <button class="footer-btn" type="submit">Startseite</button>
+            </form>
         </div>
     </div>
 
