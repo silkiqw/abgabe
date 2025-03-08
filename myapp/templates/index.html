@@ -108,6 +108,19 @@
             border: 2px solid white;
             box-shadow: 0 0 2px rgba(0,0,0,0.5);
         }
+        
+        .pagination .page-item.active .page-link {
+            background-color: #dc3545;
+            border-color: #dc3545;
+        }
+        
+        .pagination .page-link {
+            color: #dc3545;
+        }
+        
+        .pagination .page-link:hover {
+            color: #a71d2a;
+        }
     </style>
 </head>
 <body>
@@ -133,7 +146,18 @@
                     <h2 class="mb-0">Dateneingabe</h2>
                 </div>
                 <div class="col-md-6 text-end">
-                    <button type="submit" class="btn search-button text-white" id="searchButton">Wetterstationen suchen</button>
+                    <div class="d-flex justify-content-end align-items-center gap-3">
+                        <div class="d-flex align-items-center">
+                            <label for="maxRecords" class="me-2 mb-0">Ergebnisse pro Seite:</label>
+                            <select name="maxRecords" id="maxRecords" class="form-select form-select-sm" style="width: 80px;">
+                                <option value="10" {% if maxRecords == 10 %}selected{% endif %}>10</option>
+                                <option value="20" {% if maxRecords == 20 %}selected{% endif %}>20</option>
+                                <option value="50" {% if maxRecords == 50 %}selected{% endif %}>50</option>
+                                <option value="100" {% if maxRecords == 100 %}selected{% endif %}>100</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn search-button text-white" id="searchButton">Wetterstationen suchen</button>
+                    </div>
                 </div>
             </div>
             
@@ -149,11 +173,11 @@
                 </div>
                 <div class="col-md-2 mb-3">
                     <label for="yearFrom" class="form-label">Von (Jahr)</label>
-                    <input type="number" min="1973" max="2024" class="form-control" name="yearFrom" id="yearFrom" placeholder="z.B. 2000">
+                    <input type="number" min="1973" max="2024" class="form-control" name="yearFrom" id="yearFrom" placeholder="z.B. 2000" {% if yearFrom %} value="{{ yearFrom }}" {% endif %}>
                 </div>
                 <div class="col-md-2 mb-3">
                     <label for="yearTo" class="form-label">Bis (Jahr)</label>
-                    <input type="number" min="1973" max="2024" class="form-control" name="yearTo" id="yearTo" placeholder="z.B. 2020">
+                    <input type="number" min="1973" max="2024" class="form-control" name="yearTo" id="yearTo" placeholder="z.B. 2020" {% if yearTo %} value="{{ yearTo }}" {% endif %}>
                 </div>
                 <div class="col-md-4 mb-3 radius-input">
                     <label for="searchRadius" class="form-label">Suchradius eingeben</label>
@@ -161,7 +185,7 @@
                         <div class="flex-grow-1 me-3">
                             <div class="custom-range-container">
                                 <div class="custom-range-track"></div>
-                                <div class="custom-range-fill" id="rangeFill" style="width: 17%;"></div>
+                                <div class="custom-range-fill" id="rangeFill" style="width: {% if inputs %}{{ inputs.4 }}{% else %}17{% endif %}%;"></div>
                                 <input type="range" class="custom-range" name="searchRadius" id="searchRadius" min="0" max="100" {% if inputs %} value="{{ inputs.4 }}" {% else %} value="17" {% endif %} oninput="updateValue(this.value)">
                             </div>
                         </div>
@@ -177,7 +201,7 @@
             <h3> {{ result2 }} </h3>
         {% endif %}
         {% if result %}
-    <h3 class="mb-3">Suchergebnisse ({{ result|length }} gefunden)</h3>
+    <h3 class="mb-3">Suchergebnisse ({{ total_results }} gefunden)</h3>
     <form action="{% url 'result' %}" method="post">
         {% csrf_token %}
         <div>
@@ -190,6 +214,48 @@
             </ul>
         </div>
     </form>
+    
+    <!-- Pagination -->
+    {% if pages_count > 1 %}
+    <div class="d-flex justify-content-center mt-4">
+        <nav aria-label="Suchergebnisse Navigation">
+            <ul class="pagination">
+                {% if current_page > 1 %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1&maxRecords={{ maxRecords }}&yearFrom={{ yearFrom }}&yearTo={{ yearTo }}&lat={{ inputs.0 }}&lon={{ inputs.1 }}&searchRadius={{ inputs.4 }}" aria-label="Erste">
+                        <span aria-hidden="true">&laquo;&laquo;</span>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ current_page|add:'-1' }}&maxRecords={{ maxRecords }}&yearFrom={{ yearFrom }}&yearTo={{ yearTo }}&lat={{ inputs.0 }}&lon={{ inputs.1 }}&searchRadius={{ inputs.4 }}" aria-label="Vorherige">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+                {% endif %}
+                
+                {% for i in page_range %}
+                <li class="page-item {% if current_page == i %}active{% endif %}">
+                    <a class="page-link" href="?page={{ i }}&maxRecords={{ maxRecords }}&yearFrom={{ yearFrom }}&yearTo={{ yearTo }}&lat={{ inputs.0 }}&lon={{ inputs.1 }}&searchRadius={{ inputs.4 }}">{{ i }}</a>
+                </li>
+                {% endfor %}
+                
+                {% if current_page < pages_count %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ current_page|add:'1' }}&maxRecords={{ maxRecords }}&yearFrom={{ yearFrom }}&yearTo={{ yearTo }}&lat={{ inputs.0 }}&lon={{ inputs.1 }}&searchRadius={{ inputs.4 }}" aria-label="Nächste">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ pages_count }}&maxRecords={{ maxRecords }}&yearFrom={{ yearFrom }}&yearTo={{ yearTo }}&lat={{ inputs.0 }}&lon={{ inputs.1 }}&searchRadius={{ inputs.4 }}" aria-label="Letzte">
+                        <span aria-hidden="true">&raquo;&raquo;</span>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+    
 {% elif message %}
     <h3 class="mb-3">Suchergebnisse</h3>
     <div class="alert alert-info">
