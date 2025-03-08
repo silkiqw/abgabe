@@ -148,12 +148,12 @@
                     <input type="number" step="0.0001" name="lon" class="form-control" id="lon" required {% if inputs %} value="{{ inputs.1 }}" {% endif %}>
                 </div>
                 <div class="col-md-2 mb-3">
-                    <label for="dateFrom" class="form-label">Von</label>
-                    <input type="date" class="form-control" name="dateFrom" id="dateFrom">
+                    <label for="yearFrom" class="form-label">Von (Jahr)</label>
+                    <input type="number" min="1973" max="2024" class="form-control" name="yearFrom" id="yearFrom" placeholder="z.B. 2000">
                 </div>
                 <div class="col-md-2 mb-3">
-                    <label for="dateTo" class="form-label">Bis</label>
-                    <input type="date" class="form-control" name="dateTo" id="dateTo">
+                    <label for="yearTo" class="form-label">Bis (Jahr)</label>
+                    <input type="number" min="1973" max="2024" class="form-control" name="yearTo" id="yearTo" placeholder="z.B. 2020">
                 </div>
                 <div class="col-md-4 mb-3 radius-input">
                     <label for="searchRadius" class="form-label">Suchradius eingeben</label>
@@ -166,7 +166,7 @@
                             </div>
                         </div>
                         <div class="slider-value">
-                            <span>Suchradius: </span><span name="radiusValue" id="radiusValue">{% if inputs %} {{ inputs.4 }} {% else %} 1" {% endif %}</span>km
+                            <span>Suchradius: </span><span name="radiusValue" id="radiusValue">{% if inputs %} {{ inputs.4 }} {% else %} 17 {% endif %}</span>km
                         </div>
                     </div>
                 </div>
@@ -211,7 +211,6 @@
         const radiusValue = document.getElementById('radiusValue');
         const rangeFill = document.getElementById('rangeFill');
         const searchButton = document.getElementById('searchButton');
-        const resultsContainer = document.getElementById('resultsContainer');
         
         // Set initial fill
         rangeFill.style.width = slider.value + '%';
@@ -220,115 +219,113 @@
             radiusValue.textContent = this.value;
             rangeFill.style.width = this.value + '%';
         });
+
+        function validateYearInputs() {
+            const yearFrom = document.getElementById('yearFrom');
+            const yearTo = document.getElementById('yearTo');
+            
+            // Setze min/max-Attribute für die Jahresbereiche
+            const minYear = 1973;
+            const maxYear = 2024;
+            
+            // Event-Listener für das Von-Jahr
+            yearFrom.addEventListener('change', function() {
+                // Prüfe, ob das Jahr innerhalb des erlaubten Bereichs liegt
+                if (this.value < minYear) {
+                    alert('Das Jahr darf nicht vor 1973 liegen.');
+                    this.value = minYear;
+                } else if (this.value > maxYear) {
+                    alert('Das Jahr darf nicht nach 2024 liegen.');
+                    this.value = maxYear;
+                }
+                
+                // Wenn das Bis-Jahr vor dem Von-Jahr liegt, korrigiere es
+                if (yearTo.value && parseInt(yearTo.value) < parseInt(this.value)) {
+                    alert('Das Bis-Jahr darf nicht vor dem Von-Jahr liegen.');
+                    yearTo.value = this.value;
+                }
+            });
+            
+            // Event-Listener für das Bis-Jahr
+            yearTo.addEventListener('change', function() {
+                // Prüfe, ob das Jahr innerhalb des erlaubten Bereichs liegt
+                if (this.value < minYear) {
+                    alert('Das Jahr darf nicht vor 1973 liegen.');
+                    this.value = minYear;
+                } else if (this.value > maxYear) {
+                    alert('Das Jahr darf nicht nach 2024 liegen.');
+                    this.value = maxYear;
+                }
+                
+                // Wenn das Bis-Jahr vor dem Von-Jahr liegt, korrigiere es
+                if (yearFrom.value && parseInt(this.value) < parseInt(yearFrom.value)) {
+                    alert('Das Bis-Jahr darf nicht vor dem Von-Jahr liegen.');
+                    this.value = yearFrom.value;
+                }
+            });
+        }
         
-        // Show results when search button is clicked
-        //searchButton.addEventListener('click', function() {
-        //    resultsContainer.style.display = 'block';
-        //});
-
-        function validateDateInputs() {
-  const dateFrom = document.getElementById('dateFrom');
-  const dateTo = document.getElementById('dateTo');
-  
-  // Setze min/max-Attribute für die Datumsbereiche
-  const minDate = '1973-01-01';
-  const maxDate = '2024-12-31';
-  
-  dateFrom.min = minDate;
-  dateFrom.max = maxDate;
-  dateTo.min = minDate;
-  dateTo.max = maxDate;
-  
-  // Event-Listener für das Von-Datum
-  dateFrom.addEventListener('change', function() {
-    // Prüfe, ob das Datum innerhalb des erlaubten Bereichs liegt
-    if (this.value < minDate) {
-      alert('Das Datum darf nicht vor 1973 liegen.');
-      this.value = minDate;
-    } else if (this.value > maxDate) {
-      alert('Das Datum darf nicht nach 2024 liegen.');
-      this.value = maxDate;
-    }
-    
-    // Aktualisiere das Mindestdatum für das Bis-Feld
-    dateTo.min = this.value;
-    
-    // Wenn das Bis-Datum vor dem Von-Datum liegt, korrigiere es
-    if (dateTo.value && dateTo.value < this.value) {
-      alert('Das Bis-Datum darf nicht vor dem Von-Datum liegen.');
-      dateTo.value = this.value;
-    }
-  });
-  
-  // Event-Listener für das Bis-Datum
-  dateTo.addEventListener('change', function() {
-    // Prüfe, ob das Datum innerhalb des erlaubten Bereichs liegt
-    if (this.value < minDate) {
-      alert('Das Datum darf nicht vor 1973 liegen.');
-      this.value = minDate;
-    } else if (this.value > maxDate) {
-      alert('Das Datum darf nicht nach 2024 liegen.');
-      this.value = maxDate;
-    }
-    
-    // Wenn das Bis-Datum vor dem Von-Datum liegt, korrigiere es
-    if (dateFrom.value && this.value < dateFrom.value) {
-      alert('Das Bis-Datum darf nicht vor dem Von-Datum liegen.');
-      this.value = dateFrom.value;
-    }
-  });
-}
-
-// Funktion zur Formularvalidierung vor dem Absenden
-function validateForm(event) {
-  const dateFrom = document.getElementById('dateFrom');
-  const dateTo = document.getElementById('dateTo');
-  
-  // Prüfe, ob die Datumsfelder ausgefüllt sind
-  if (!dateFrom.value || !dateTo.value) {
-    alert('Bitte geben Sie sowohl ein Von- als auch ein Bis-Datum ein.');
-    event.preventDefault();
-    return false;
-  }
-  
-  // Prüfe, ob die Daten im gültigen Bereich liegen
-  const minDate = '1973-01-01';
-  const maxDate = '2024-12-31';
-  
-  if (dateFrom.value < minDate || dateFrom.value > maxDate) {
-    alert('Das Von-Datum muss zwischen 1973 und 2024 liegen.');
-    event.preventDefault();
-    return false;
-  }
-  
-  if (dateTo.value < minDate || dateTo.value > maxDate) {
-    alert('Das Bis-Datum muss zwischen 1973 und 2024 liegen.');
-    event.preventDefault();
-    return false;
-  }
-  
-  // Prüfe, ob das Bis-Datum nach dem Von-Datum liegt
-  if (dateTo.value < dateFrom.value) {
-    alert('Das Bis-Datum darf nicht vor dem Von-Datum liegen.');
-    event.preventDefault();
-    return false;
-  }
-  
-  // Wenn alle Validierungen erfolgreich sind, wird das Formular abgesendet
-  return true;
-}
-
-
-document.addEventListener('DOMContentLoaded', function() {
-  // Initialisiere die Datumsvalidierung
-  validateDateInputs();
-  
-  
-  const form = document.querySelector('form[action*="check"]');
-  if (form) {
-    form.addEventListener('submit', validateForm);
-  }
-});
+        // Funktion zur Formularvalidierung vor dem Absenden
+        function validateForm(event) {
+            const yearFrom = document.getElementById('yearFrom');
+            const yearTo = document.getElementById('yearTo');
+            
+            // Prüfe, ob die Jahresfelder ausgefüllt sind
+            if (!yearFrom.value || !yearTo.value) {
+                alert('Bitte geben Sie sowohl ein Von- als auch ein Bis-Jahr ein.');
+                event.preventDefault();
+                return false;
+            }
+            
+            // Prüfe, ob die Jahre im gültigen Bereich liegen
+            const minYear = 1973;
+            const maxYear = 2024;
+            
+            if (yearFrom.value < minYear || yearFrom.value > maxYear) {
+                alert('Das Von-Jahr muss zwischen 1973 und 2024 liegen.');
+                event.preventDefault();
+                return false;
+            }
+            
+            if (yearTo.value < minYear || yearTo.value > maxYear) {
+                alert('Das Bis-Jahr muss zwischen 1973 und 2024 liegen.');
+                event.preventDefault();
+                return false;
+            }
+            
+            // Prüfe, ob das Bis-Jahr nach dem Von-Jahr liegt
+            if (parseInt(yearTo.value) < parseInt(yearFrom.value)) {
+                alert('Das Bis-Jahr darf nicht vor dem Von-Jahr liegen.');
+                event.preventDefault();
+                return false;
+            }
+            
+            // Wenn alle Validierungen erfolgreich sind, konvertiere die Jahre in Datumswerte
+            // für die Backend-Verarbeitung
+            const hiddenDateFrom = document.createElement('input');
+            hiddenDateFrom.type = 'hidden';
+            hiddenDateFrom.name = 'dateFrom';
+            hiddenDateFrom.value = yearFrom.value + '-01-01';
+            event.target.appendChild(hiddenDateFrom);
+            
+            const hiddenDateTo = document.createElement('input');
+            hiddenDateTo.type = 'hidden';
+            hiddenDateTo.name = 'dateTo';
+            hiddenDateTo.value = yearTo.value + '-12-31';
+            event.target.appendChild(hiddenDateTo);
+            
+            return true;
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialisiere die Jahresvalidierung
+            validateYearInputs();
+            
+            const form = document.querySelector('form[action*="check"]');
+            if (form) {
+                form.addEventListener('submit', validateForm);
+            }
+        });
     </script>
     
 </body>
