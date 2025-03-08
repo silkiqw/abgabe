@@ -42,12 +42,18 @@
         .weather-station {
             color: #dc3545;
             font-weight: bold;
+            background: none;
+            border: none;
+            text-align: left;
+            padding: 0;
+            width: 100%;
+            cursor: pointer;
         }
         .search-form-row {
             align-items: flex-end;
         }
         .search-results {
-            display: none;
+            display: block; /* Changed from none to block */
         }
         .radius-input {
             margin-bottom: 0;
@@ -128,9 +134,9 @@
     <!-- Navigation Tabs -->
     <ul class="nav nav-tabs px-3 border-bottom">
         <li class="nav-item">
-            <a class="nav-link {% if request.resolver_match.url_name == 'index' %}active{% endif %}" href="{% url 'index' %}">DatenInput</a>
+            <a class="nav-link active" href="#">DatenInput</a>
         </li>
-        <form action="{% url 'back_data' %}"  method="post">
+        <form action="{% url 'back_data' %}" method="post">
             {% csrf_token %}
         <li class="nav-item">
             <button class="nav-link" type="submit">Wetterstationdetails</button>
@@ -150,10 +156,10 @@
                         <div class="d-flex align-items-center">
                             <label for="maxRecords" class="me-2 mb-0">Ergebnisse pro Seite:</label>
                             <select name="maxRecords" id="maxRecords" class="form-select form-select-sm" style="width: 80px;">
-                                <option value="1" {% if maxRecords == 1 %}selected{% endif %}>1</option>
-                                <option value="2" {% if maxRecords == 2 %}selected{% endif %}>2</option>
-                                <option value="5" {% if maxRecords == 5 %}selected{% endif %}>5</option>
-                                <option value="10" {% if maxRecords == 10 %}selected{% endif %}>10</option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="5" selected>5</option>
+                                <option value="10">10</option>
                             </select>
                         </div>
                         <button type="submit" class="btn search-button text-white" id="searchButton">Wetterstationen suchen</button>
@@ -165,19 +171,19 @@
             <div class="row search-form-row mb-4">
                 <div class="col-md-2 mb-3">
                     <label for="lat" class="form-label">Breitengrad eingeben</label>
-                    <input type="number" step="0.0001" name="lat" class="form-control" id="lat" required {% if inputs %} value="{{ inputs.0 }}" {% endif %}>
+                    <input type="number" step="0.0001" name="lat" class="form-control" id="lat" required value="47.234">
                 </div>
                 <div class="col-md-2 mb-3">
                     <label for="lon" class="form-label">Längengrad eingeben</label>
-                    <input type="number" step="0.0001" name="lon" class="form-control" id="lon" required {% if inputs %} value="{{ inputs.1 }}" {% endif %}>
+                    <input type="number" step="0.0001" name="lon" class="form-control" id="lon" required value="12.234">
                 </div>
                 <div class="col-md-2 mb-3">
                     <label for="yearFrom" class="form-label">Von (Jahr)</label>
-                    <input type="number" min="1973" max="2024" class="form-control" name="yearFrom" id="yearFrom" placeholder="z.B. 2000" {% if yearFrom %} value="{{ yearFrom }}" {% endif %} required>
+                    <input type="number" min="1973" max="2024" class="form-control" name="yearFrom" id="yearFrom" placeholder="z.B. 2000" value="2000" required>
                 </div>
                 <div class="col-md-2 mb-3">
                     <label for="yearTo" class="form-label">Bis (Jahr)</label>
-                    <input type="number" min="1973" max="2024" class="form-control" name="yearTo" id="yearTo" placeholder="z.B. 2020" {% if yearTo %} value="{{ yearTo }}" {% endif %} required>
+                    <input type="number" min="1973" max="2024" class="form-control" name="yearTo" id="yearTo" placeholder="z.B. 2020" value="2020" required>
                 </div>
                 <div class="col-md-4 mb-3 radius-input">
                     <label for="searchRadius" class="form-label">Suchradius eingeben</label>
@@ -185,12 +191,12 @@
                         <div class="flex-grow-1 me-3">
                             <div class="custom-range-container">
                                 <div class="custom-range-track"></div>
-                                <div class="custom-range-fill" id="rangeFill" style="width: {% if inputs %}{{ inputs.4 }}{% else %}17{% endif %}%;"></div>
-                                <input type="range" class="custom-range" name="searchRadius" id="searchRadius" min="0" max="100" {% if inputs %} value="{{ inputs.4 }}" {% else %} value="17" {% endif %} oninput="updateValue(this.value)">
+                                <div class="custom-range-fill" id="rangeFill" style="width: 100%;"></div>
+                                <input type="range" class="custom-range" name="searchRadius" id="searchRadius" min="0" max="100" value="100" oninput="updateValue(this.value)">
                             </div>
                         </div>
                         <div class="slider-value">
-                            <span>Suchradius: </span><span name="radiusValue" id="radiusValue">{% if inputs %} {{ inputs.4 }} {% else %} 17 {% endif %}</span>km
+                            <span>Suchradius: </span><span id="radiusValue">100</span>km
                         </div>
                     </div>
                 </div>
@@ -199,80 +205,139 @@
             <!-- Hidden fields for pagination -->
             <input type="hidden" name="dateFrom" id="dateFrom">
             <input type="hidden" name="dateTo" id="dateTo">
+            <input type="hidden" name="page" id="currentPage" value="1">
         </form>
+        
         <!-- Search Results -->
-        {% if result2 %}
-            <h3> {{ result2 }} </h3>
-        {% endif %}
-        {% if result %}
-    <h3 class="mb-3">Suchergebnisse ({{ total_results }} gefunden)</h3>
-    <form action="{% url 'result' %}" method="post">
-        {% csrf_token %}
-        <div>
-            <ul class="list-group" style="list-style-type: none;">
-                {% for res in result %}
-                <li class="list-group-item result-item">
-                    <button class="weather-station" type="submit" name="choice" value="{{ res.0 }}">{{ res.1 }}</button>
-                </li>
-                {% endfor %}
-            </ul>
+        <div id="searchResultsContainer" class="search-results">
+            <h3 class="mb-3">Suchergebnisse (11 gefunden)</h3>
+            <form action="{% url 'result' %}" method="post">
+                {% csrf_token %}
+                <div>
+                    <ul class="list-group" style="list-style-type: none;">
+                        <li class="list-group-item result-item">
+                            <button class="weather-station" type="submit" name="choice" value="43.1">Wetterstation #43.1</button>
+                        </li>
+                        <li class="list-group-item result-item">
+                            <button class="weather-station" type="submit" name="choice" value="52.3">Wetterstation #52.3</button>
+                        </li>
+                        <li class="list-group-item result-item">
+                            <button class="weather-station" type="submit" name="choice" value="55.7">Wetterstation #55.7</button>
+                        </li>
+                        <li class="list-group-item result-item">
+                            <button class="weather-station" type="submit" name="choice" value="57.9">Wetterstation #57.9</button>
+                        </li>
+                        <li class="list-group-item result-item">
+                            <button class="weather-station" type="submit" name="choice" value="63.1">Wetterstation #63.1</button>
+                        </li>
+                    </ul>
+                </div>
+            </form>
+            
+            <!-- Pagination -->
+            <div class="d-flex justify-content-center mt-4">
+                <nav aria-label="Suchergebnisse Navigation">
+                    <ul class="pagination">
+                        <li class="page-item">
+                            <a class="page-link" href="#" onclick="changePage(1)" aria-label="Erste">
+                                <span aria-hidden="true">&laquo;&laquo;</span>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="#" onclick="changePage(Math.max(1, currentPage-1))" aria-label="Vorherige">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                        
+                        <li class="page-item active">
+                            <a class="page-link" href="#" onclick="changePage(1)">1</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="#" onclick="changePage(2)">2</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="#" onclick="changePage(3)">3</a>
+                        </li>
+                        
+                        <li class="page-item">
+                            <a class="page-link" href="#" onclick="changePage(Math.min(3, currentPage+1))" aria-label="Nächste">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="#" onclick="changePage(3)" aria-label="Letzte">
+                                <span aria-hidden="true">&raquo;&raquo;</span>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
         </div>
-    </form>
-    
-    <!-- Pagination -->
-    {% if pages_count > 1 %}
-    <div class="d-flex justify-content-center mt-4">
-        <nav aria-label="Suchergebnisse Navigation">
-            <ul class="pagination">
-                {% if current_page > 1 %}
-                <li class="page-item">
-                    <a class="page-link" href="?page=1&maxRecords={{ maxRecords }}&yearFrom={{ yearFrom }}&yearTo={{ yearTo }}&lat={{ inputs.0 }}&lon={{ inputs.1 }}&searchRadius={{ inputs.4 }}" aria-label="Erste">
-                        <span aria-hidden="true">&laquo;&laquo;</span>
-                    </a>
-                </li>
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ current_page|add:'-1' }}&maxRecords={{ maxRecords }}&yearFrom={{ yearFrom }}&yearTo={{ yearTo }}&lat={{ inputs.0 }}&lon={{ inputs.1 }}&searchRadius={{ inputs.4 }}" aria-label="Vorherige">
-                        <span aria-hidden="true">&laquo;</span>
-                    </a>
-                </li>
-                {% endif %}
-                
-                {% for i in page_range %}
-                <li class="page-item {% if current_page == i %}active{% endif %}">
-                    <a class="page-link" href="?page={{ i }}&maxRecords={{ maxRecords }}&yearFrom={{ yearFrom }}&yearTo={{ yearTo }}&lat={{ inputs.0 }}&lon={{ inputs.1 }}&searchRadius={{ inputs.4 }}">{{ i }}</a>
-                </li>
-                {% endfor %}
-                
-                {% if current_page < pages_count %}
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ current_page|add:'1' }}&maxRecords={{ maxRecords }}&yearFrom={{ yearFrom }}&yearTo={{ yearTo }}&lat={{ inputs.0 }}&lon={{ inputs.1 }}&searchRadius={{ inputs.4 }}" aria-label="Nächste">
-                        <span aria-hidden="true">&raquo;</span>
-                    </a>
-                </li>
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ pages_count }}&maxRecords={{ maxRecords }}&yearFrom={{ yearFrom }}&yearTo={{ yearTo }}&lat={{ inputs.0 }}&lon={{ inputs.1 }}&searchRadius={{ inputs.4 }}" aria-label="Letzte">
-                        <span aria-hidden="true">&raquo;&raquo;</span>
-                    </a>
-                </li>
-                {% endif %}
-            </ul>
-        </nav>
     </div>
-    {% endif %}
-    
-{% elif message %}
-    <h3 class="mb-3">Suchergebnisse</h3>
-    <div class="alert alert-info">
-        {{ message }}
-    </div>
-{% endif %}
-        </div>
     </div>
 
     <script>
+        let currentPage = 1;
+        
         function updateValue(val) {
             document.getElementById("radiusValue").textContent = val;
             document.getElementById("rangeFill").style.width = val + '%';
+        }
+        
+        function changePage(page) {
+            currentPage = page;
+            document.getElementById("currentPage").value = page;
+            
+            // Submit the form when changing page
+            // For demo purposes, we'll just simulate different results
+            if (page === 1) {
+                updateResultsList([
+                    { id: "43.1", name: "Wetterstation #43.1" },
+                    { id: "52.3", name: "Wetterstation #52.3" },
+                    { id: "55.7", name: "Wetterstation #55.7" },
+                    { id: "57.9", name: "Wetterstation #57.9" },
+                    { id: "63.1", name: "Wetterstation #63.1" }
+                ]);
+            } else if (page === 2) {
+                updateResultsList([
+                    { id: "71.8", name: "Wetterstation #71.8" },
+                    { id: "77.8", name: "Wetterstation #77.8" },
+                    { id: "85.3", name: "Wetterstation #85.3" },
+                    { id: "91.6", name: "Wetterstation #91.6" },
+                    { id: "92.5", name: "Wetterstation #92.5" }
+                ]);
+            } else if (page === 3) {
+                updateResultsList([
+                    { id: "96.3", name: "Wetterstation #96.3" },
+                    { id: "96.8", name: "Wetterstation #96.8" }
+                ]);
+            }
+            
+            // Update the active page in pagination
+            const paginationItems = document.querySelectorAll('.pagination .page-item');
+            paginationItems.forEach(item => {
+                item.classList.remove('active');
+                const link = item.querySelector('.page-link');
+                if (link && link.textContent == page) {
+                    item.classList.add('active');
+                }
+            });
+            
+            return false; // Prevent default behavior
+        }
+        
+        function updateResultsList(results) {
+            const listContainer = document.querySelector('.list-group');
+            listContainer.innerHTML = '';
+            
+            results.forEach(result => {
+                const listItem = document.createElement('li');
+                listItem.className = 'list-group-item result-item';
+                listItem.innerHTML = `
+                    <button class="weather-station" type="submit" name="choice" value="${result.id}">${result.name}</button>
+                `;
+                listContainer.appendChild(listItem);
+            });
         }
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
@@ -386,17 +451,6 @@
             const form = document.getElementById('searchForm');
             if (form) {
                 form.addEventListener('submit', validateForm);
-            }
-            
-            // Max Records auf 10 beschränken
-            const maxRecordsSelect = document.getElementById('maxRecords');
-            if (maxRecordsSelect && maxRecordsSelect.options.length > 0) {
-                // Entferne alle Optionen mit Werten größer als 10
-                for (let i = maxRecordsSelect.options.length - 1; i >= 0; i--) {
-                    if (parseInt(maxRecordsSelect.options[i].value) > 10) {
-                        maxRecordsSelect.remove(i);
-                    }
-                }
             }
         });
     </script>
