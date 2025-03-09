@@ -206,6 +206,7 @@ def get_name(id):
 def back(request):
     if request.method == "POST":
         stations = cache.get("stations",[])
+        inputs = cache.get("inputs", [])
         if(len(stations) == 0):
             return render(request, 'index.html', {'nothing': ""})
         else:
