@@ -12,7 +12,7 @@ from django.test import TestCase
 from django.core.cache import cache 
 from django.http import HttpResponse
 from django.shortcuts import render
-from unittest.mock import patch, mock_open
+from unittest.mock import patch, mock_open, MagicMock
 from django.conf import settings
 from django.test import RequestFactory
 from myapp.views import (
@@ -26,6 +26,11 @@ from myapp.views import (
     fetch_data,
     get_season,
     get_name,
+    sort_by_dist,
+    result,
+    back,
+    back_data,
+    index
 )
 
 def test_docker_resource_limits():
@@ -312,3 +317,148 @@ def test_get_name_error(mock_file):
     # Test für get_name mit Fehler
     with pytest.raises(Exception):
         get_name("ID1")
+
+def test_sort_by_dist():
+    # Test sorting stations by distance
+    test_data = [
+        ["STATION1", 50.5],
+        ["STATION2", 10.3],
+        ["STATION3", 75.8],
+        ["STATION4", 5.2]
+    ]
+    
+    sorted_data = sort_by_dist(test_data)
+    
+    # Check if the data is sorted by the distance (second element)
+    assert sorted_data[0][0] == "STATION4"
+    assert sorted_data[1][0] == "STATION2"
+    assert sorted_data[2][0] == "STATION1"
+    assert sorted_data[3][0] == "STATION3"
+    
+    # Check that all elements are still present
+    assert len(sorted_data) == 4
+    
+    # Check that the original list items are unchanged except for order
+    stations = [item[0] for item in sorted_data]
+    assert "STATION1" in stations
+    assert "STATION2" in stations
+    assert "STATION3" in stations
+    assert "STATION4" in stations
+
+@patch("myapp.views.render", return_value=HttpResponse())
+@patch("myapp.views.get_name", return_value="Test Station")
+@patch("myapp.views.fetch_data", return_value=[["2020", 10.5, 20.3, 8.1, 18.7, 15.2, 25.6, 12.3, 22.1, 5.4, 15.8]])
+def test_result(mock_fetch_data, mock_get_name, mock_render):
+    # Set up request
+    factory = RequestFactory()
+    request = factory.post("/result", {"choice": "TEST123"})
+    
+    # Set up cache.get to return test data
+    with patch("django.core.cache.cache.get", side_effect=lambda key, default: [2020] if key == "years" else default):
+        response = result(request)
+    
+    # Check if the function processed the request correctly
+    mock_get_name.assert_called_once_with("TEST123")
+    mock_fetch_data.assert_called_once()
+    
+    # Check if the cache was set correctly
+    mock_render.assert_called_once()
+    context = mock_render.call_args[0][2]
+    assert 'result' in context
+    assert 'name' in context
+    assert context['name'] == "Test Station"
+    assert context['result'] == [["2020", 10.5, 20.3, 8.1, 18.7, 15.2, 25.6, 12.3, 22.1, 5.4, 15.8]]
+
+@patch("myapp.views.render", return_value=HttpResponse())
+def test_back_with_stations(mock_render):
+    # Test back function when stations are in cache
+    factory = RequestFactory()
+    request = factory.post("/back")
+    
+    # Set up test data
+    test_stations = [["STATION1", 10.2, "Station Name 1"], ["STATION2", 25.7, "Station Name 2"]]
+    test_inputs = [50.1, 10.5, 2000, 2020, 50]
+    
+    # Mock cache.get to return test data
+    with patch("django.core.cache.cache.get", side_effect=lambda key, default: 
+              test_stations if key == "stations" else 
+              test_inputs if key == "inputs" else default):
+        response = back(request)
+    
+    # Check if render was called with correct context
+    mock_render.assert_called_once()
+    context = mock_render.call_args[0][2]
+    assert 'result' in context
+    assert 'inputs' in context
+    assert context['result'] == test_stations
+    assert context['inputs'] == test_inputs
+
+@patch("myapp.views.render", return_value=HttpResponse())
+def test_back_without_stations(mock_render):
+    # Test back function when no stations are in cache
+    factory = RequestFactory()
+    request = factory.post("/back")
+    
+    # Mock cache.get to return empty list
+    with patch("django.core.cache.cache.get", return_value=[]):
+        response = back(request)
+    
+    # Check if render was called with correct context
+    mock_render.assert_called_once()
+    context = mock_render.call_args[0][2]
+    assert 'nothing' in context
+    assert context['nothing'] == ""
+
+@patch("myapp.views.render", return_value=HttpResponse())
+def test_back_data_with_data(mock_render):
+    # Test back_data function when station data is in cache
+    factory = RequestFactory()
+    request = factory.post("/back_data")
+    
+    # Set up test data
+    test_data = [["2020", 10.5, 20.3, 8.1, 18.7, 15.2, 25.6, 12.3, 22.1, 5.4, 15.8]]
+    test_name = "Test Station"
+    
+    # Mock cache.get to return test data
+    with patch("django.core.cache.cache.get", side_effect=lambda key, default: 
+              test_data if key == "station_data" else 
+              test_name if key == "name" else default):
+        response = back_data(request)
+    
+    # Check if render was called with correct context
+    mock_render.assert_called_once()
+    context = mock_render.call_args[0][2]
+    assert 'result' in context
+    assert 'name' in context
+    assert context['result'] == test_data
+    assert context['name'] == test_name
+
+@patch("myapp.views.render", return_value=HttpResponse())
+def test_back_data_without_data(mock_render):
+    # Test back_data function when no station data is in cache
+    factory = RequestFactory()
+    request = factory.post("/back_data")
+    
+    # Mock cache.get for empty station data but with a name
+    with patch("django.core.cache.cache.get", side_effect=lambda key, default: 
+              [] if key == "station_data" else 
+              "Test Station" if key == "name" else default):
+        response = back_data(request)
+    
+    # Check if render was called with correct context
+    mock_render.assert_called_once()
+    context = mock_render.call_args[0][2]
+    assert 'name' in context
+    assert context['name'] == "Test Station"
+    assert 'result' not in context
+
+def test_index():
+    # Test index function
+    factory = RequestFactory()
+    request = factory.get("/")
+    
+    with patch("myapp.views.render", return_value=HttpResponse()) as mock_render:
+        response = index(request)
+        
+        # Check if render was called with correct template and context
+        mock_render.assert_called_once_with(request, "index.html", {"result": None})
