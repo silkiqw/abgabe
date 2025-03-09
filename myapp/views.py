@@ -70,6 +70,7 @@ def check(request):
         start_date = int(request.POST.get("dateFrom")[:4])
         end_date = int(request.POST.get("dateTo")[:4])
         inputs = [lat, lon, start_date, end_date, rad]
+        cache.set("inputs",inputs,timeout=3600)
         years = []
         date = start_date
         while date <= end_date:
@@ -206,9 +207,12 @@ def back(request):
     if request.method == "POST":
         stations = cache.get("stations",[])
         if(len(stations) == 0):
-            return render(request, 'index.html', {'no': ""})
+            return render(request, 'index.html', {'nothing': ""})
         else:
-            return render(request, 'index.html', {'result': stations})
+            if len(inputs) == 0:
+                return render(request, 'index.html', {'result': stations})
+            else:
+                return render(request, 'index.html', {'result': stations, 'inputs': inputs})
 
 def back_data(request):
     if request.method == "POST":
