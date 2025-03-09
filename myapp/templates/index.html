@@ -200,11 +200,11 @@
                 </div>
                 <div class="col-md-2 mb-3">
                     <label for="yearFrom" class="form-label">Von (Jahr)</label>
-                    <input type="number" min="1973" max="2024" class="form-control" name="yearFrom" id="yearFrom" placeholder="z.B. 2000">
+                    <input type="number" min="1973" max="2024" class="form-control" name="yearFrom" id="yearFrom" placeholder="z.B. 2000" {% if inputs %} value="{{ inputs.2 }}" {% endif %}>
                 </div>
                 <div class="col-md-2 mb-3">
                     <label for="yearTo" class="form-label">Bis (Jahr)</label>
-                    <input type="number" min="1973" max="2024" class="form-control" name="yearTo" id="yearTo" placeholder="z.B. 2020">
+                    <input type="number" min="1973" max="2024" class="form-control" name="yearTo" id="yearTo" placeholder="z.B. 2020" {% if inputs %} value="{{ inputs.3 }}" {% endif %}>
                 </div>
                 <div class="col-md-4 mb-3 radius-input">
                     <label for="searchRadius" class="form-label">Suchradius eingeben</label>
@@ -247,7 +247,7 @@
             <ul class="list-group" id="resultsList" style="list-style-type: none;">
                 {% for res in result %}
                 <li class="list-group-item result-item" style="display: none;" data-page="1">
-                    <button class="weather-station" type="submit" name="choice" value="{{ res.0 }}">{{ res.1 }}</button>
+                    <button class="weather-station" type="submit" name="choice" value="{{ res.0 }}">{{ res.2 }} ({{ res.1}} km)</button>
                 </li>
                 {% endfor %}
             </ul>
