@@ -237,6 +237,7 @@
             <button type="button" class="btn btn-sm items-per-page-btn" data-value="3">3</button>
             <button type="button" class="btn btn-sm items-per-page-btn" data-value="5">5</button>
             <button type="button" class="btn btn-sm items-per-page-btn active" data-value="10">10</button>
+            <button type="button" class="btn btn-sm items-per-page-btn" data-value="all">Alle</button>
         </div>
     </div>
     
@@ -252,7 +253,7 @@
             </ul>
             
             <!-- Pagination -->
-            <div class="pagination-container">
+            <div class="pagination-container" id="paginationContainer">
                 <nav aria-label="Suchergebnisse-Navigation">
                     <ul class="pagination" id="pagination">
                         <!-- Pagination wird durch JavaScript gefüllt -->
@@ -296,15 +297,45 @@
                         this.classList.add('active');
                         
                         // Wert aktualisieren
-                        itemsPerPage = parseInt(this.getAttribute('data-value'));
-                        document.getElementById('itemsPerPageInput').value = itemsPerPage;
+                        const value = this.getAttribute('data-value');
                         
-                        // Pagination neu initialisieren
-                        initPagination(itemsPerPage);
+                        if (value === 'all') {
+                            // Alle Ergebnisse anzeigen
+                            showAllResults();
+                        } else {
+                            // Normale Pagination verwenden
+                            itemsPerPage = parseInt(value);
+                            document.getElementById('itemsPerPageInput').value = itemsPerPage;
+                            
+                            // Pagination-Container wieder anzeigen falls er versteckt war
+                            document.getElementById('paginationContainer').style.display = 'flex';
+                            
+                            // Pagination neu initialisieren
+                            initPagination(itemsPerPage);
+                        }
                     });
                 });
             }
         });
+        
+        function showAllResults() {
+            const resultsList = document.getElementById('resultsList');
+            if (!resultsList) return;
+            
+            const resultItems = resultsList.querySelectorAll('.result-item');
+            if (resultItems.length === 0) return;
+            
+            // Alle Ergebnisse anzeigen
+            resultItems.forEach(item => {
+                item.style.display = 'block';
+            });
+            
+            // Pagination ausblenden
+            document.getElementById('paginationContainer').style.display = 'none';
+            
+            // Hidden field auf "all" setzen
+            document.getElementById('itemsPerPageInput').value = 'all';
+        }
         
         function initPagination(itemsPerPage) {
             const resultsList = document.getElementById('resultsList');
