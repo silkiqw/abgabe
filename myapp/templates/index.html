@@ -200,11 +200,11 @@
                 </div>
                 <div class="col-md-2 mb-3">
                     <label for="yearFrom" class="form-label">Von (Jahr)</label>
-                    <input type="number" min="1973" max="2024" class="form-control" name="yearFrom" id="yearFrom" placeholder="z.B. 2000" {% if inputs %} value="{{ inputs.2 }}" {% endif %}>
+                    <input type="number" max="2024" class="form-control" name="yearFrom" id="yearFrom" placeholder="z.B. 2000" {% if inputs %} value="{{ inputs.2 }}" {% endif %}>
                 </div>
                 <div class="col-md-2 mb-3">
                     <label for="yearTo" class="form-label">Bis (Jahr)</label>
-                    <input type="number" min="1973" max="2024" class="form-control" name="yearTo" id="yearTo" placeholder="z.B. 2020" {% if inputs %} value="{{ inputs.3 }}" {% endif %}>
+                    <input type="number" max="2024" class="form-control" name="yearTo" id="yearTo" placeholder="z.B. 2020" {% if inputs %} value="{{ inputs.3 }}" {% endif %}>
                 </div>
                 <div class="col-md-4 mb-3 radius-input">
                     <label for="searchRadius" class="form-label">Suchradius eingeben</label>
@@ -468,17 +468,14 @@
             
             if (!yearFrom || !yearTo) return;
             
-            // Setze min/max-Attribute für die Jahresbereiche
-            const minYear = 1973;
+            // Setze max-Attribute für die Jahresbereiche
+            // Keine Untergrenze mehr für yearFrom
             const maxYear = 2024;
             
             // Event-Listener für das Von-Jahr
             yearFrom.addEventListener('change', function() {
-                // Prüfe, ob das Jahr innerhalb des erlaubten Bereichs liegt
-                if (this.value < minYear) {
-                    alert('Das Jahr darf nicht vor 1973 liegen.');
-                    this.value = minYear;
-                } else if (this.value > maxYear) {
+                // Nur noch Überprüfung der oberen Grenze
+                if (this.value > maxYear) {
                     alert('Das Jahr darf nicht nach 2024 liegen.');
                     this.value = maxYear;
                 }
@@ -492,11 +489,8 @@
             
             // Event-Listener für das Bis-Jahr
             yearTo.addEventListener('change', function() {
-                // Prüfe, ob das Jahr innerhalb des erlaubten Bereichs liegt
-                if (this.value < minYear) {
-                    alert('Das Jahr darf nicht vor 1973 liegen.');
-                    this.value = minYear;
-                } else if (this.value > maxYear) {
+                // Nur noch Überprüfung der oberen Grenze für das Bis-Jahr
+                if (this.value > maxYear) {
                     alert('Das Jahr darf nicht nach 2024 liegen.');
                     this.value = maxYear;
                 }
@@ -523,18 +517,17 @@
                 return false;
             }
             
-            // Prüfe, ob die Jahre im gültigen Bereich liegen
-            const minYear = 1973;
+            // Prüfe nur noch die obere Grenze
             const maxYear = 2024;
             
-            if (yearFrom.value < minYear || yearFrom.value > maxYear) {
-                alert('Das Von-Jahr muss zwischen 1973 und 2024 liegen.');
+            if (yearFrom.value > maxYear) {
+                alert('Das Von-Jahr darf nicht nach 2024 liegen.');
                 event.preventDefault();
                 return false;
             }
             
-            if (yearTo.value < minYear || yearTo.value > maxYear) {
-                alert('Das Bis-Jahr muss zwischen 1973 und 2024 liegen.');
+            if (yearTo.value > maxYear) {
+                alert('Das Bis-Jahr darf nicht nach 2024 liegen.');
                 event.preventDefault();
                 return false;
             }
