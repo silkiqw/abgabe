@@ -1,4 +1,4 @@
-name: Run Tests
+name: Run Tests with Coverage
 
 on:
   push:
@@ -26,5 +26,14 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run Pytest
-        run: pytest myapp/test_myapp.py --disable-warnings
+      - name: Run Tests with Coverage
+        run: |
+          coverage run -m pytest myapp/test_myapp.py --disable-warnings
+          coverage report -m
+          coverage xml
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+          fail_ci_if_error: false
