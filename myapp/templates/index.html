@@ -133,6 +133,32 @@
         .pagination .page-link:hover {
             color: #c82333;
         }
+        
+        /* Items per page selector styles */
+        .items-per-page-container {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+        }
+        
+        .items-per-page-container label {
+            margin-right: 10px;
+            margin-bottom: 0;
+        }
+        
+        .items-per-page-btn {
+            margin-left: 5px;
+            background-color: #f5f7fa;
+            border: 1px solid #ced4da;
+            color: #495057;
+        }
+        
+        .items-per-page-btn.active {
+            background-color: #dc3545;
+            border-color: #dc3545;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -187,7 +213,7 @@
                             <div class="custom-range-container">
                                 <div class="custom-range-track"></div>
                                 <div class="custom-range-fill" id="rangeFill" style="width: 17%;"></div>
-                                <input type="range" class="custom-range" name="searchRadius" id="searchRadius" min="0" max="100" {% if inputs %} value="{{ inputs.4 }}" {% else %} value="17" {% endif %} oninput="updateValue(this.value)">
+                                <input type="range" class="custom-range" name="searchRadius" id="searchRadius" min="0" max="100" {% if inputs %} value="{{ inputs.4 }}" {% else %} value="50" {% endif %} oninput="updateValue(this.value)">
                             </div>
                         </div>
                         <div class="slider-value">
@@ -203,6 +229,17 @@
         {% endif %}
         {% if result %}
     <h3 class="mb-3">Suchergebnisse ({{ result|length }} gefunden)</h3>
+    
+    <!-- Anzahl der Einträge pro Seite Auswahl -->
+    <div class="items-per-page-container">
+        <label for="itemsPerPage">Einträge pro Seite:</label>
+        <div class="btn-group" role="group" aria-label="Einträge pro Seite">
+            <button type="button" class="btn btn-sm items-per-page-btn" data-value="3">3</button>
+            <button type="button" class="btn btn-sm items-per-page-btn" data-value="5">5</button>
+            <button type="button" class="btn btn-sm items-per-page-btn active" data-value="10">10</button>
+        </div>
+    </div>
+    
     <form action="{% url 'result' %}" method="post" id="resultsForm">
         {% csrf_token %}
         <div>
@@ -224,6 +261,7 @@
             </div>
             
             <input type="hidden" name="currentPage" id="currentPage" value="1">
+            <input type="hidden" name="itemsPerPage" id="itemsPerPageInput" value="10">
         </div>
     </form>
 {% elif message %}
@@ -242,18 +280,39 @@
         
         // Pagination Funktionen
         document.addEventListener('DOMContentLoaded', function() {
+            // Standardwert für Einträge pro Seite
+            let itemsPerPage = 10;
+            
             // Pagination initialisieren, wenn Ergebnisse vorhanden sind
-            initPagination();
+            initPagination(itemsPerPage);
+            
+            // Event-Listener für die Auswahl der Einträge pro Seite
+            const itemsPerPageButtons = document.querySelectorAll('.items-per-page-btn');
+            if (itemsPerPageButtons.length > 0) {
+                itemsPerPageButtons.forEach(button => {
+                    button.addEventListener('click', function() {
+                        // Aktiven Button markieren
+                        itemsPerPageButtons.forEach(btn => btn.classList.remove('active'));
+                        this.classList.add('active');
+                        
+                        // Wert aktualisieren
+                        itemsPerPage = parseInt(this.getAttribute('data-value'));
+                        document.getElementById('itemsPerPageInput').value = itemsPerPage;
+                        
+                        // Pagination neu initialisieren
+                        initPagination(itemsPerPage);
+                    });
+                });
+            }
         });
         
-        function initPagination() {
+        function initPagination(itemsPerPage) {
             const resultsList = document.getElementById('resultsList');
             if (!resultsList) return;
             
             const resultItems = resultsList.querySelectorAll('.result-item');
             if (resultItems.length === 0) return;
             
-            const itemsPerPage = 10;
             const totalPages = Math.ceil(resultItems.length / itemsPerPage);
             
             // Pagination-Element
@@ -285,17 +344,17 @@
             a.textContent = text;
             a.addEventListener('click', function(e) {
                 e.preventDefault();
-                handlePagination(pageNum);
+                const itemsPerPage = parseInt(document.getElementById('itemsPerPageInput').value);
+                handlePagination(pageNum, itemsPerPage);
             });
             
             li.appendChild(a);
             return li;
         }
         
-        function handlePagination(pageNum) {
+        function handlePagination(pageNum, itemsPerPage) {
             const resultsList = document.getElementById('resultsList');
             const resultItems = resultsList.querySelectorAll('.result-item');
-            const itemsPerPage = 10;
             const totalPages = Math.ceil(resultItems.length / itemsPerPage);
             
             // Überprüfe gültige Seitenzahl
@@ -321,13 +380,13 @@
             const prevButton = document.querySelector('#pagination .page-item:first-child');
             prevButton.querySelector('a').addEventListener('click', function(e) {
                 e.preventDefault();
-                handlePagination(pageNum - 1);
+                handlePagination(pageNum - 1, itemsPerPage);
             });
             
             const nextButton = document.querySelector('#pagination .page-item:last-child');
             nextButton.querySelector('a').addEventListener('click', function(e) {
                 e.preventDefault();
-                handlePagination(pageNum + 1);
+                handlePagination(pageNum + 1, itemsPerPage);
             });
             
             // Deaktiviere Previous/Next wenn am Anfang/Ende
