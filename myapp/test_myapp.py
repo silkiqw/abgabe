@@ -479,6 +479,21 @@ def test_index():
         }
     )
 ])
+@pytest.mark.parametrize("lat, lon, year, expected_values", [
+    (
+        40.7789, -73.9692, 2023, 
+        {
+            "spring_min": 8.3, 
+            "spring_max": 17.2, 
+            "summer_min": 19.6, 
+            "summer_max": 27.8, 
+            "fall_min": 11.6, 
+            "fall_max": 18.5, 
+            "winter_min": 2.9, 
+            "winter_max": 9.6
+        }
+    )
+])
 def test_central_park_2023_temperatures(lat, lon, year, expected_values):
     """
     Test to verify that the temperature data for Central Park, NYC in 2023
@@ -495,10 +510,16 @@ def test_central_park_2023_temperatures(lat, lon, year, expected_values):
     })
     
     # Mock the check function to return the Central Park station
+    # Korrektur: Stationsformat angepasst, um sicherzustellen, dass es korrekt geparst wird
     with patch("myapp.views.render") as mock_render:
         # Configure the mock to simulate finding the station
         mock_render.return_value = HttpResponse()
-        with patch("myapp.views.read_stations", return_value="USW00094728 40.7789 -73.9692 TMAX 1869 2023\nUSW00094728 40.7789 -73.9692 TMIN 1869 2023"):
+        # Hier wird die Stationsdaten-Formatierung korrigiert
+        with patch("myapp.views.read_stations", return_value=[
+            ["USW00094728", "40.7789", "-73.9692", "TMAX", "1869", "2023"],
+            ["USW00094728", "40.7789", "-73.9692", "TMIN", "1869", "2023"]
+        ]):
+            # Korrektur: Die patch-Funktion für is_within_rad angepasst
             with patch("myapp.views.is_within_rad", return_value=True):
                 # This simulates the check function finding the Central Park station
                 check(request)
