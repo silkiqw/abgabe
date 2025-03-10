@@ -487,10 +487,11 @@ def test_central_park_2023_temperatures(lat, lon, year, expected_values):
     """
     # Setup
     factory = RequestFactory()
+    
     request = factory.post("/check", {
-        "lat": str(lat),
-        "lon": str(lon),
-        "searchRadius": "10",  # Small radius to ensure we only get Central Park station
+        "lat": f"{lat}",  # Verwende f-string statt str()
+        "lon": f"{lon}",  # Verwende f-string statt str()
+        "searchRadius": "10",
         "dateFrom": f"{year}-01-01",
         "dateTo": f"{year}-12-31"
     })
