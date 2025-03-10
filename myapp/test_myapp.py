@@ -489,8 +489,8 @@ def test_central_park_2023_temperatures(lat, lon, year, expected_values):
     factory = RequestFactory()
     
     request = factory.post("/check", {
-        "lat": f"{lat}",  # Verwende f-string statt str()
-        "lon": f"{lon}",  # Verwende f-string statt str()
+        "lat": lat,  # Direkt als Float übergeben
+        "lon": lon,  # Direkt als Float übergeben
         "searchRadius": "10",
         "dateFrom": f"{year}-01-01",
         "dateTo": f"{year}-12-31"
