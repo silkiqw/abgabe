@@ -185,210 +185,227 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
     <script>
         // Chart.js Konfiguration
-        document.addEventListener('DOMContentLoaded', function() {
-            // Daten aus der Tabelle auslesen
-            const table = document.querySelector('.table');
-            const rows = Array.from(table.querySelectorAll('tbody tr'));
-            
-            const years = rows.map(row => row.cells[0].textContent);
-            const minTemp = rows.map(row => parseFloat(row.cells[1].textContent));
-            const maxTemp = rows.map(row => parseFloat(row.cells[2].textContent));
-            const minSpring = rows.map(row => parseFloat(row.cells[3].textContent));
-            const maxSpring = rows.map(row => parseFloat(row.cells[4].textContent));
-            const minSummer = rows.map(row => parseFloat(row.cells[5].textContent));
-            const maxSummer = rows.map(row => parseFloat(row.cells[6].textContent));
-            const minAutumn = rows.map(row => parseFloat(row.cells[7].textContent));
-            const maxAutumn = rows.map(row => parseFloat(row.cells[8].textContent));
-            const minWinter = rows.map(row => parseFloat(row.cells[9].textContent));
-            const maxWinter = rows.map(row => parseFloat(row.cells[10].textContent));
-            
-            const ctx = document.getElementById('temperatureChart').getContext('2d');
-            
-            const datasets = [
-                {
-                    label: 'Jahresminimum',
-                    data: minTemp,
-                    borderColor: 'rgb(0, 112, 192)',
-                    backgroundColor: 'rgba(0, 112, 192, 0.1)',
-                    tension: 0.4,
-                    fill: false,
-                    borderWidth: 2,
-                    group: 'jahr'
-                },
-                {
-                    label: 'Jahresmaximum',
-                    data: maxTemp,
-                    borderColor: 'rgb(255, 0, 0)',
-                    backgroundColor: 'rgba(255, 0, 0, 0.1)',
-                    tension: 0.4,
-                    fill: false,
-                    borderWidth: 2,
-                    group: 'jahr'
-                },
-                {
-                    label: 'Frühlingsminimum',
-                    data: minSpring,
-                    borderColor: 'rgb(0, 100, 0)',
-                    backgroundColor: 'rgba(0, 100, 0, 0.1)',
-                    tension: 0.4,
-                    fill: false,
-                    borderWidth: 2,
-                    group: 'fruhling'
-                },
-                {
-                    label: 'Frühlingsmaximum',
-                    data: maxSpring,
-                    borderColor: 'rgb(0, 255, 0)',
-                    backgroundColor: 'rgba(0, 255, 0, 0.1)',
-                    tension: 0.4,
-                    fill: false,
-                    borderWidth: 2,
-                    group: 'fruhling'
-                },
-                {
-                    label: 'Sommerminimum',
-                    data: minSummer,
-                    borderColor: 'rgb(204, 102, 0)',
-                    backgroundColor: 'rgba(204, 102, 0, 0.1)',
-                    tension: 0.4,
-                    fill: false,
-                    borderWidth: 2,
-                    group: 'sommer'
-                },
-                {
-                    label: 'Sommermaximum',
-                    data: maxSummer,
-                    borderColor: 'rgb(255, 165, 0)',
-                    backgroundColor: 'rgba(255, 165, 0, 0.1)',
-                    tension: 0.4,
-                    fill: false,
-                    borderWidth: 2,
-                    group: 'sommer'
-                },
-                {
-                    label: 'Herbstminimum',
-                    data: minAutumn,
-                    borderColor: 'rgb(101, 67, 33)',
-                    backgroundColor: 'rgba(101, 67, 33, 0.1)',
-                    tension: 0.4,
-                    fill: false,
-                    borderWidth: 2,
-                    group: 'herbst'
-                },
-                {
-                    label: 'Herbstmaximum',
-                    data: maxAutumn,
-                    borderColor: 'rgb(181, 101, 29)',
-                    backgroundColor: 'rgba(181, 101, 29, 0.1)',
-                    tension: 0.4,
-                    fill: false,
-                    borderWidth: 2,
-                    group: 'herbst'
-                },
-                {
-                    label: 'Winterminimum',
-                    data: minWinter,
-                    borderColor: 'rgb(64, 64, 64)',
-                    backgroundColor: 'rgba(64, 64, 64, 0.1)',
-                    tension: 0.4,
-                    fill: false,
-                    borderWidth: 2,
-                    group: 'winter'
-                },
-                {
-                    label: 'Wintermaximum',
-                    data: maxWinter,
-                    borderColor: 'rgb(192, 192, 192)',
-                    backgroundColor: 'rgba(192, 192, 192, 0.1)',
-                    tension: 0.4,
-                    fill: false,
-                    borderWidth: 2,
-                    group: 'winter'
-                }
-            ];
-            
-            // Alle Datasets kopieren, um mit den Originalwerten zu arbeiten
-            const allDatasets = JSON.parse(JSON.stringify(datasets));
-
-// Vorverarbeitung der Daten, um NaN-Werte zu behandeln
-allDatasets.forEach(dataset => {
-    // Wir ersetzen NaN-Werte nicht mehr, aber stellen sicher, dass die Option spanGaps auf false gesetzt ist
-    dataset.spanGaps = false; // Das ist der Schlüssel - es erzwingt das Zeichnen von Linien über Lücken
-});
-
-// Chart erstellen
-const chart = new Chart(ctx, {
-    type: 'line',
-    data: {
-        labels: years,
-        datasets: allDatasets
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            title: {
-                display: false
-            },
-            legend: {
-                position: 'top',
-            }
+        // Chart.js Konfiguration
+document.addEventListener('DOMContentLoaded', function() {
+    // Daten aus der Tabelle auslesen
+    const table = document.querySelector('.table');
+    const rows = Array.from(table.querySelectorAll('tbody tr'));
+    
+    // Jahre aus der Tabelle extrahieren
+    const yearsFromTable = rows.map(row => parseInt(row.cells[0].textContent));
+    
+    // Min und Max Jahr bestimmen
+    const minYear = Math.min(...yearsFromTable);
+    const maxYear = Math.max(...yearsFromTable);
+    
+    // Vollständige Jahresreihe erstellen
+    const completeYears = [];
+    for (let year = minYear; year <= maxYear; year++) {
+        completeYears.push(year);
+    }
+    
+    // Funktion zum Abrufen von Daten für ein bestimmtes Jahr oder NaN, wenn keine Daten existieren
+    function getValueForYear(year, dataIndex) {
+        const rowIndex = yearsFromTable.indexOf(year);
+        if (rowIndex === -1) {
+            return NaN; // Kein Wert für dieses Jahr vorhanden
+        }
+        return parseFloat(rows[rowIndex].cells[dataIndex].textContent);
+    }
+    
+    // Daten für alle Jahre erzeugen, mit NaN für fehlende Jahre
+    const minTemp = completeYears.map(year => getValueForYear(year, 1));
+    const maxTemp = completeYears.map(year => getValueForYear(year, 2));
+    const minSpring = completeYears.map(year => getValueForYear(year, 3));
+    const maxSpring = completeYears.map(year => getValueForYear(year, 4));
+    const minSummer = completeYears.map(year => getValueForYear(year, 5));
+    const maxSummer = completeYears.map(year => getValueForYear(year, 6));
+    const minAutumn = completeYears.map(year => getValueForYear(year, 7));
+    const maxAutumn = completeYears.map(year => getValueForYear(year, 8));
+    const minWinter = completeYears.map(year => getValueForYear(year, 9));
+    const maxWinter = completeYears.map(year => getValueForYear(year, 10));
+    
+    const ctx = document.getElementById('temperatureChart').getContext('2d');
+    
+    const datasets = [
+        {
+            label: 'Jahresminimum',
+            data: minTemp,
+            borderColor: 'rgb(0, 112, 192)',
+            backgroundColor: 'rgba(0, 112, 192, 0.1)',
+            tension: 0.4,
+            fill: false,
+            borderWidth: 2,
+            group: 'jahr'
         },
-        scales: {
-            y: {
-                beginAtZero: false,
+        {
+            label: 'Jahresmaximum',
+            data: maxTemp,
+            borderColor: 'rgb(255, 0, 0)',
+            backgroundColor: 'rgba(255, 0, 0, 0.1)',
+            tension: 0.4,
+            fill: false,
+            borderWidth: 2,
+            group: 'jahr'
+        },
+        {
+            label: 'Frühlingsminimum',
+            data: minSpring,
+            borderColor: 'rgb(0, 100, 0)',
+            backgroundColor: 'rgba(0, 100, 0, 0.1)',
+            tension: 0.4,
+            fill: false,
+            borderWidth: 2,
+            group: 'fruhling'
+        },
+        {
+            label: 'Frühlingsmaximum',
+            data: maxSpring,
+            borderColor: 'rgb(0, 255, 0)',
+            backgroundColor: 'rgba(0, 255, 0, 0.1)',
+            tension: 0.4,
+            fill: false,
+            borderWidth: 2,
+            group: 'fruhling'
+        },
+        {
+            label: 'Sommerminimum',
+            data: minSummer,
+            borderColor: 'rgb(204, 102, 0)',
+            backgroundColor: 'rgba(204, 102, 0, 0.1)',
+            tension: 0.4,
+            fill: false,
+            borderWidth: 2,
+            group: 'sommer'
+        },
+        {
+            label: 'Sommermaximum',
+            data: maxSummer,
+            borderColor: 'rgb(255, 165, 0)',
+            backgroundColor: 'rgba(255, 165, 0, 0.1)',
+            tension: 0.4,
+            fill: false,
+            borderWidth: 2,
+            group: 'sommer'
+        },
+        {
+            label: 'Herbstminimum',
+            data: minAutumn,
+            borderColor: 'rgb(101, 67, 33)',
+            backgroundColor: 'rgba(101, 67, 33, 0.1)',
+            tension: 0.4,
+            fill: false,
+            borderWidth: 2,
+            group: 'herbst'
+        },
+        {
+            label: 'Herbstmaximum',
+            data: maxAutumn,
+            borderColor: 'rgb(181, 101, 29)',
+            backgroundColor: 'rgba(181, 101, 29, 0.1)',
+            tension: 0.4,
+            fill: false,
+            borderWidth: 2,
+            group: 'herbst'
+        },
+        {
+            label: 'Winterminimum',
+            data: minWinter,
+            borderColor: 'rgb(64, 64, 64)',
+            backgroundColor: 'rgba(64, 64, 64, 0.1)',
+            tension: 0.4,
+            fill: false,
+            borderWidth: 2,
+            group: 'winter'
+        },
+        {
+            label: 'Wintermaximum',
+            data: maxWinter,
+            borderColor: 'rgb(192, 192, 192)',
+            backgroundColor: 'rgba(192, 192, 192, 0.1)',
+            tension: 0.4,
+            fill: false,
+            borderWidth: 2,
+            group: 'winter'
+        }
+    ];
+    
+    // Alle Datasets kopieren, um mit den Originalwerten zu arbeiten
+    const allDatasets = JSON.parse(JSON.stringify(datasets));
+
+    // Chart erstellen
+    const chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: completeYears,
+            datasets: allDatasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
                 title: {
-                    display: true,
-                    text: 'Temperatur (°C)'
+                    display: false
+                },
+                legend: {
+                    position: 'top',
                 }
             },
-            x: {
-                title: {
-                    display: true,
-                    text: 'Jahr'
+            scales: {
+                y: {
+                    beginAtZero: false,
+                    title: {
+                        display: true,
+                        text: 'Temperatur (°C)'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Jahr'
+                    }
                 }
-            }
-        },
-        elements: {
-            line: {
-                tension: 0.4
+            },
+            elements: {
+                line: {
+                    tension: 0.4
+                }
             }
         }
-    }
-});
+    });
+    
+    // Funktionalität für Hervorheben der Serien
+    document.querySelectorAll('.series-toggle').forEach(button => {
+        button.addEventListener('click', () => {
+            const series = button.getAttribute('data-series');
             
-            // Funktionalität für Hervorheben der Serien
-            document.querySelectorAll('.series-toggle').forEach(button => {
-                button.addEventListener('click', () => {
-                    const series = button.getAttribute('data-series');
-                    
-                    // Alle Buttons zurücksetzen
-                    document.querySelectorAll('.series-toggle').forEach(btn => {
-                        btn.classList.remove('btn-primary');
-                        btn.classList.add('btn-outline-secondary');
-                    });
-                    
-                    // Geklickten Button aktivieren
-                    button.classList.remove('btn-outline-secondary');
-                    button.classList.add('btn-primary');
-                    
-                    if (series === 'alles') {
-                        // Alle Datensätze anzeigen
-                        chart.data.datasets = JSON.parse(JSON.stringify(allDatasets));
-                    } else {
-                        // Nur die ausgewählten Datensätze anzeigen
-                        chart.data.datasets = JSON.parse(JSON.stringify(allDatasets)).filter(
-                            dataset => dataset.group === series
-                        );
-                    }
-                    
-                    chart.update();
-                });
+            // Alle Buttons zurücksetzen
+            document.querySelectorAll('.series-toggle').forEach(btn => {
+                btn.classList.remove('btn-primary');
+                btn.classList.add('btn-outline-secondary');
             });
             
-            // Standardmäßig alle Serien anzeigen
-            document.querySelector('.series-toggle[data-series="alles"]').click();
+            // Geklickten Button aktivieren
+            button.classList.remove('btn-outline-secondary');
+            button.classList.add('btn-primary');
+            
+            if (series === 'alles') {
+                // Alle Datensätze anzeigen
+                chart.data.datasets = JSON.parse(JSON.stringify(allDatasets));
+            } else {
+                // Nur die ausgewählten Datensätze anzeigen
+                chart.data.datasets = JSON.parse(JSON.stringify(allDatasets)).filter(
+                    dataset => dataset.group === series
+                );
+            }
+            
+            chart.update();
         });
+    });
+    
+    // Standardmäßig alle Serien anzeigen
+    document.querySelector('.series-toggle[data-series="alles"]').click();
+});
     </script>
 </body>
 </html>
