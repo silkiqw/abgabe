@@ -300,14 +300,14 @@ def test_get_season_southern_hemisphere(mock_cache_get):
     assert get_season(9) == "Spring"
     assert get_season(12) == "Summer"
 
-@patch("builtins.open", new_callable=mock_open, read_data="ID1,Name1\nID2,Name2")
-@patch("myapp.views.range", return_value=[1])  # Beschränke den Bereich auf nur eine Iteration
+@patch("builtins.open", new_callable=mock_open, read_data="ID1,Field1,Field2,Field3,Field4,Name1")
+@patch("myapp.views.range", return_value=[1])
 @patch("csv.reader")
 def test_get_name(mock_reader, mock_range, mock_file):
     # Konfiguriere den CSV-Reader-Mock
     mock_reader.return_value = [
-        ["Header", "Header", "Header", "Header", "Header"],
-        ["ID1", "Field1", "Field2", "Field3", "Name1"]
+        ["ID", "Field1", "Field2", "Field3", "Field4", "Name"],
+        ["ID1", "Field1", "Field2", "Field3", "Field4", "Name1"]
     ]
     
     assert get_name("ID1") == "Name1"
