@@ -12,8 +12,11 @@ from django.core.cache import cache
 def index(request):     #Startseite
     return render(request, "index.html", {"result": None})
     
-#Distanzberechnung nahc Haversine
+
 def distance(lat1, lon1, lat2, lon2):
+    #Erhält zwei Sätze Koordinaten, gibt die Distanz zurück
+    #Distanzberechnung nahc Haversine
+    ##Zuerst Umwandlung der Koordinatn aus Strings in FLoat 
     lat1 = float(lat1) #Daten kommen als String  
     lat2 = float(lat2)
     lon1 = float(lon1) 
@@ -27,14 +30,17 @@ def distance(lat1, lon1, lat2, lon2):
     return R * c
 
 def is_within_rad(lat1, lon1, lat2, lon2, r):
+    #Verknüpfung der Distanzberechnung nach Haversine mit Überprüfung ob das Ergebnis innerhalb einer gegebenen Distanz liegt
     r = int(r)
     d = distance(lat1, lon1, lat2, lon2)
     return d <= r
 
 def filter_duplicates(lst):
+    #Filtert alle Werte aus der gegebenen Liste, die nicht doppelt in der Liste vorkommen
     return [x for x in lst if lst.count(x) > 1]
 
 def remove_duplicates(lst):
+    #Erstellt eine Liste, welche keine Duplikate mehr enthält
     l_new = []
     for l in range(len(lst)):
         if l % 2 == 0:
@@ -42,14 +48,18 @@ def remove_duplicates(lst):
     return l_new
 
 def get_names(lst):
-    for item in lst:
-        station_id = item[0]
+    #Erhält eine Liste mit Listen. Die Stations-ID befindet sich in den Sublisten am Index 0
+    #Dazu wird die Funktion get_name(id) für jeden Eintrag einmal aufgerufen und der Name hinzugefügt
+    for l in lst:
+        station_id = l[0]
         name = get_name(station_id)
         if name:  # Nur anhängen, wenn ein Name gefunden wurde
-            item.append(name)
+            l.append(name)
     return lst
 
 def read_stations():
+    #Lädt die heruntergeladene Daten ghcnd-inventory und gibt diese bei erfolgreichem Laden zurück
+    #sonst wird eine Fehlermeldung und eine leere Liste zurückgegeben 
     try:
         with open(os.path.join(settings.BASE_DIR, "data", "stations.txt"), mode='r', encoding='utf-8') as file:
             return file.read()
@@ -58,10 +68,19 @@ def read_stations():
         return []
     
 def sort_by_dist(lst):
+    #sortiert die gegebene Staionsliste nach den Distanzwerten, welche sich am Index 1 befindet
     return sorted(lst, key=lambda l: l[1])
 
 
 def check(request):
+    #Sucht mit den EIngaben aus dem html-form Staionen und gibt eine Staionsliste (stations) mit Treffern zurück
+    #Holt sich die Eingaben aus dem html-form (lat, lon, start_date, end_date, rad) und speichert diese im cache
+    #Aus den Start- und Endjahr wird eine entsprechende Liste (years) generiert
+    #Aud fem geladenen Text werden pro Zeile Stations-id, Breitengrad, Längengrad, Typ der Daten (TMIN oder TMAX) Start und Endjahr der Daten extrahiert
+    #DAnn wird abgeglichen ob das gewünschte Zeitintervall innerhalb der vorliegenden WErte für TMIN bzw. TMAX liegt. Anschließend wird die Distanz überprüft.
+    #Trifft beides zu werden ID und Distanz der Station in der Stationsliste gespeichert
+    #Da TMIN und TMAX jeweils eigene Zeilen haben, muss eine Station zweimal in der Stationsliste vorkommen. Deshalb müssen alle Staionen, die nur einmal in der Liste vorkommen rausgefiltert werden
+    #Danach werden Duplikate entfernt und der Stationsname für jeden Eintrag hinzugefügt
     if request.method == 'POST':
         lat = request.POST.get("lat") #Eingabe aus html-form
         lon = request.POST.get("lon")
@@ -104,7 +123,9 @@ def check(request):
             return render(request, 'index.html', {'result': stations, "inputs": inputs})
             
 
-def result(request):    #Anzeigen der Stationsdaten
+def result(request):
+    #Aus der Userwahl wird die Stations-ID erhalten. Zurückgegeben werden Daten und Name der Station
+    #Die ID wird benötigt um Name und Daten der Station zu laden, die Jahreszahlen (years) werden aus dem chache geladen
     if request.method == 'POST':
         id = request.POST.get("choice")
         name = get_name(id)
@@ -116,7 +137,14 @@ def result(request):    #Anzeigen der Stationsdaten
 
 DATA_URL = "https://www1.ncdc.noaa.gov/pub/data/ghcn/daily/all/"    #Url zu der Liste aller Stationen
 
-def fetch_data(station_id, years):     #Zugriff auf die Daten der webseite
+def fetch_data(station_id, years):
+    #Lädt die Wetterdaten einer Station von der noaa-Seite anhand der Stations-id und einer Liste der gewünschten Jahre
+    #Die ID wird verwendet um auf die entsprechende dly-Datei von nooa zugreifen zu können.
+    #Aus jeder Zeile der Daten werden Jahr, Monat, DatenTyp und die Tageswerte extrahiert
+    #Wenn das Jahr innerhalb des gewünschten Intervalls liegt und der DAtentyp TMIN oder TMAX ist, wird der DAtenliste Jahr, Datentyp, Jahreszeit(wird aus dem Monat berechnet), Tageswert hinzugefügt
+    #Danach werden Dictionaries benutzt um die Durchschnittswerte für TMIN und TMAX für das gesamte Jahr, sowie für die einzelnen Jahreszeiten zu berechnen.
+    #Diese Durchschnittswerte werden pro Jahr in einer bestimmten Reihenfolge in der avg_List gespeichert.
+    #Abschließend wird die avg_list zurückgegeben
     station_id = str(station_id)
     url = f"{DATA_URL}{station_id}.dly"
     response = requests.get(url)
@@ -133,22 +161,31 @@ def fetch_data(station_id, years):     #Zugriff auf die Daten der webseite
             if len(line) < 20:
                 continue
             record_year = line[11:15].strip()
-            print(f"Extracted year: {record_year}")
-            if record_year == str(year):
+            if int(record_year) + 1 == year:
                 record_type = line[17:21].strip()
-                print(f"Extracted record type: {record_type}")
                 if record_type == "TMIN" or record_type == "TMAX":
-                    for i in range(21, len(line), 8):
-                        day_value = line[i:i+5].strip()
-                        print(f"Extracted day value: {day_value}")
-                        if day_value.lstrip("-").isdigit():
-                            if int(day_value) != -9999:
-                                month = int(line[15:17].strip())
-                                print(f"Extracted month: {month}")
-                                value = int(day_value) / 10
-                                season = get_season(month)
-                                
-                                records.append((record_year, record_type, season, value))
+                    if int(line[15:17].strip()) == 12:
+                        for i in range(21, len(line), 8):
+                            day_value = line[i:i+5].strip()
+                            if day_value.lstrip("-").isdigit():
+                                if int(day_value) != -9999:
+                                    month = int(line[15:17].strip())
+                                    value = int(day_value) / 10 #Daten sind als Zehntel Grad Celsius gespeichert deshalb muss durch 10 geteilt werden
+                                    season = get_season(month)
+                                    records.append((str(int(record_year)+1), record_type, season, value))
+
+            elif record_year == str(year):
+                record_type = line[17:21].strip()
+                if record_type == "TMIN" or record_type == "TMAX":
+                    if int(line[15:17].strip()) != 12:
+                        for i in range(21, len(line), 8):
+                            day_value = line[i:i+5].strip()
+                            if day_value.lstrip("-").isdigit():
+                                if int(day_value) != -9999:
+                                    month = int(line[15:17].strip())
+                                    value = int(day_value) / 10 #Daten sind als Zehntel Grad Celsius gespeichert deshalb muss durch 10 geteilt werden
+                                    season = get_season(month)
+                                    records.append((record_year, record_type, season, value))
     
     df = pandas.DataFrame(records, columns=["Year", "Type","Season", "Value"])
     avg_values = df.groupby(["Type","Year"])["Value"].mean().unstack().to_dict()
@@ -175,6 +212,9 @@ def fetch_data(station_id, years):     #Zugriff auf die Daten der webseite
         return avg_list
     
 def get_season(month):
+    #Erhält einen Monat und gibt die entsprechende Jahreszeit zurück
+    #Durch Laden des Breitengrades (lat) wird bestimmt ob sich die Wetterstation auf der Nord- oder Südhalbkugel befindet. (positiv Nordhalbkugel; negativ Nordhalbkugel)
+    #Je nach Lage wird eine andere Jahreszeit zurückgegeben
     lat = float(cache.get("lat",0))
     if lat >= 0:
         if month in [3, 4, 5]:
@@ -196,14 +236,17 @@ def get_season(month):
             return "Summer"
         
 def get_name(id):
-    with open(os.path.join(settings.BASE_DIR, "data", "station.csv"), mode='r', encoding='utf-8') as file:#Zugriff stations.csv
+    #Die Stations-csv wird durchsucht, um Anhand der ID den Namen einer Wetterstation zurückzugeben 
+    with open(os.path.join(settings.BASE_DIR, "data", "ghcnd-stations.csv"), mode='r', encoding='utf-8') as file:#Zugriff stations.csv
             reader = csv.reader(file)
             data = list(reader)
             for i in range(1, 128025):
                 if data[i][0] == str(id):
-                    return data[i][4] 
+                    return data[i][5] 
 
 def back(request):
+    #Wird genutzt wenn über den Button Dateninput zurück zu den Suchergebnissen gegangen wird. Dazu wird die Stationsliste aus dem Cache geladen
+    #Die vorherigen Eingabewerte (inputs) werden aus dem cache geladen, und wieder im html-form angezeigt
     if request.method == "POST":
         stations = cache.get("stations",[])
         inputs = cache.get("inputs", [])
@@ -216,6 +259,9 @@ def back(request):
                 return render(request, 'index.html', {'result': stations, 'inputs': inputs})
 
 def back_data(request):
+    #Wird genutzt wenn User über den Button Wetterstationsdetails zurück zu den Daten der Wetterstation geht.
+    #Dazu werden Name und Daten (name, station_data) der Station aus dem cache geladen, um diese wieder anzeigen zu können
+    #Befinden sich keine Daten dazu im Cache, wurde noch keine Station geladen und es wird eine Aufforderung zuerst eine Station auszuwählen statt den Daten angezeigt 
     if request.method == "POST":
         station_data = cache.get("station_data", [])
         name = cache.get("name", "Bitte Station auswählen")
