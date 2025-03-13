@@ -22,6 +22,25 @@ Eine Django-basierte Webanwendung zum Abrufen und Analysieren historischer Wette
 
 Die einfachste Möglichkeit, die Anwendung zu starten, ist über Docker:
 
+#### Automatische Installation mit PowerShell (Windows)
+
+1. Speichern Sie das Script `install-weather-app.ps1` aus diesem Repository
+2. Öffnen Sie PowerShell
+3. Führen Sie einen der folgenden Befehle aus:
+
+   **Temporäre Bypass-Methode (empfohlen):**
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File .\install-weather-app.ps1
+   ```
+   
+   **Alternative (falls Sie die Execution Policy dauerhaft ändern möchten):**
+   ```powershell
+   Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+   .\install-weather-app.ps1
+   ```
+
+#### Manuelle Docker-Installation
+
 1. Ziehe das Docker-Image:
    ```bash
    docker pull ghcr.io/silkiqw/django-wetter-app:latest
@@ -33,6 +52,15 @@ Die einfachste Möglichkeit, die Anwendung zu starten, ist über Docker:
    ```
 
 3. Öffne die Anwendung im Browser unter `http://localhost:8000/`
+
+
+
+Führen Sie dann folgende Befehle aus:
+
+```bash
+docker build -t meine-wetter-app .
+docker run -d -p 8000:8000 meine-wetter-app
+```
 
 ### Option 2: Manuelle Installation
 
@@ -99,12 +127,9 @@ Die Anwendung verwendet Daten des Global Historical Climatology Network - Daily 
   - `templates/` - HTML-Vorlagen (index.html, result.html)
 - `data/` - Speicherort für die heruntergeladenen Wetterdaten
 - `manage.py` - Django-Verwaltungsskript
-
-
-
-
+- `Dockerfile` - Konfiguration für Docker-Deployment
+- `install-weather-app.ps1` - PowerShell-Script für automatische Docker-Installation unter Windows
 
 ## Mitwirkende
 
 - Philipp Ott, Silas Kiehne
-
