@@ -58,14 +58,12 @@ def test_docker_resource_limits():
         )
 
         output = result.stdout.strip()
-        print(f"DEBUG: docker stats output: {output}")  # Debugging
 
         # Falls `output` leer ist, Fehler werfen
         if not output:
             raise RuntimeError("Fehler: `docker stats` hat keine Werte zurückgegeben!")
 
         values = output.split()
-        print(f"DEBUG: docker stats values: {values}")
 
         if len(values) < 4:
             raise ValueError(f"Unerwartete `docker stats` Ausgabe: {output}")
@@ -178,12 +176,6 @@ def test_check_within_radius(mock_get_names, mock_remove_duplicates, mock_filter
     })
     
     response = check(request)
-    print("Response:", response)
-    print("Mock render called:", mock_render.called)
-    print("Mock render call args:", mock_render.call_args)
-    print("Render called:", mock_render.called)
-    print("is_within_rad called:", mock_is_within_rad.called)
-    print("read_stations called:", mock_read_stations.called)
     
     # Assert that render was called with the expected context
     mock_render.assert_called_once()
@@ -258,7 +250,6 @@ USW0009472820200112TMIN  200  194  183  178  178  183  194  194  194  194  194  
 
     # Execute the function
     result = fetch_data("USW00094728", [2020])
-    print("Fetch data result:", result)  # Debug output
     
     # Check if result is a list or the expected error message
     if isinstance(result, str):
@@ -462,5 +453,3 @@ def test_index():
         
         # Check if render was called with correct template and context
         mock_render.assert_called_once_with(request, "index.html", {"result": None})
-
-
