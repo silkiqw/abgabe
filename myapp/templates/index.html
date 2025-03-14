@@ -224,6 +224,9 @@
             </div>
         </form>
         <!-- Search Results -->
+        {% if err %}
+            <h3> {{ err }} </h3>
+        {% endif %}
         {% if result2 %}
             <h3> {{ result2 }} </h3>
         {% endif %}
