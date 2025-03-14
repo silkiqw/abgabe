@@ -55,12 +55,8 @@ Die einfachste Möglichkeit, die Anwendung zu starten, ist über Docker:
 
 
 
-Führen Sie dann folgende Befehle aus:
 
-```bash
-docker build -t meine-wetter-app .
-docker run -d -p 8000:8000 meine-wetter-app
-```
+
 
 ### Option 2: Manuelle Installation
 
