@@ -9,15 +9,13 @@ import requests
 from django.conf import settings
 from django.core.cache import cache
 
-def index(request):     #Startseite
+def index(request):   
     return render(request, "index.html", {"result": None})
     
 
 def distance(lat1, lon1, lat2, lon2):
-    #Erhält zwei Sätze Koordinaten, gibt die Distanz zurück
-    #Distanzberechnung nahc Haversine
-    ##Zuerst Umwandlung der Koordinatn aus Strings in FLoat 
-    lat1 = float(lat1) #Daten kommen als String  
+    #calculates the distance of 2 sets of coordinates (lat1, lon1 and lat2, lon2) using Haversine
+    lat1 = float(lat1) #Change Type from string to float  
     lat2 = float(lat2)
     lon1 = float(lon1) 
     lon2 = float(lon2)
@@ -30,17 +28,17 @@ def distance(lat1, lon1, lat2, lon2):
     return R * c
 
 def is_within_rad(lat1, lon1, lat2, lon2, r):
-    #Verknüpfung der Distanzberechnung nach Haversine mit Überprüfung ob das Ergebnis innerhalb einer gegebenen Distanz liegt
+    #checks 2 sets of coordinats in specific distance
     r = int(r)
     d = distance(lat1, lon1, lat2, lon2)
     return d <= r
 
 def filter_duplicates(lst):
-    #Filtert alle Werte aus der gegebenen Liste, die nicht doppelt in der Liste vorkommen
+    #removes every non-duplicate lst-item 
     return [x for x in lst if lst.count(x) > 1]
 
 def remove_duplicates(lst):
-    #Erstellt eine Liste, welche keine Duplikate mehr enthält
+    #returns new list without duplicates
     l_new = []
     for l in range(len(lst)):
         if l % 2 == 0:
@@ -48,18 +46,17 @@ def remove_duplicates(lst):
     return l_new
 
 def get_names(lst):
-    #Erhält eine Liste mit Listen. Die Stations-ID befindet sich in den Sublisten am Index 0
-    #Dazu wird die Funktion get_name(id) für jeden Eintrag einmal aufgerufen und der Name hinzugefügt
+    #Adds station names for every sub list in lst
+    #returns lst with station-names
     for l in lst:
         station_id = l[0]
         name = get_name(station_id)
-        if name:  # Nur anhängen, wenn ein Name gefunden wurde
+        if name:  
             l.append(name)
     return lst
 
 def read_stations():
-    #Lädt die heruntergeladene Daten ghcnd-inventory und gibt diese bei erfolgreichem Laden zurück
-    #sonst wird eine Fehlermeldung und eine leere Liste zurückgegeben 
+    #Loads the data of ghcnd-inventory(station.txt)
     try:
         with open(os.path.join(settings.BASE_DIR, "data", "stations.txt"), mode='r', encoding='utf-8') as file:
             return file.read()
@@ -68,19 +65,17 @@ def read_stations():
         return []
     
 def sort_by_dist(lst):
-    #sortiert die gegebene Staionsliste nach den Distanzwerten, welche sich am Index 1 befindet
+    #sorts a given list of lists by the distance-entry 
     return sorted(lst, key=lambda l: l[1])
 
 
 def check(request):
-    #Sucht mit den EIngaben aus dem html-form Staionen und gibt eine Staionsliste (stations) mit Treffern zurück
-    #Holt sich die Eingaben aus dem html-form (lat, lon, start_date, end_date, rad) und speichert diese im cache
-    #Aus den Start- und Endjahr wird eine entsprechende Liste (years) generiert
-    #Aud fem geladenen Text werden pro Zeile Stations-id, Breitengrad, Längengrad, Typ der Daten (TMIN oder TMAX) Start und Endjahr der Daten extrahiert
-    #DAnn wird abgeglichen ob das gewünschte Zeitintervall innerhalb der vorliegenden WErte für TMIN bzw. TMAX liegt. Anschließend wird die Distanz überprüft.
-    #Trifft beides zu werden ID und Distanz der Station in der Stationsliste gespeichert
-    #Da TMIN und TMAX jeweils eigene Zeilen haben, muss eine Station zweimal in der Stationsliste vorkommen. Deshalb müssen alle Staionen, die nur einmal in der Liste vorkommen rausgefiltert werden
-    #Danach werden Duplikate entfernt und der Stationsname für jeden Eintrag hinzugefügt
+    #gets inputs (lat, lon, start_date, end_date, rad) from html-form and generating list of years.
+    #saving inputs in cache for other functions
+    #searches ghcnd-inventory for station in range and existing TMIN + TMAX values in years-interval. Saves station-id and distance in stations-list
+    #2 lines for TMIN and TMAX -> every station needs 2 entrys in stations list -> removing of non-duplicates
+    #Adds station-names to station list and sorts entries by distance
+    #returns stations list (and saves in cache) 
     if request.method == 'POST':
         lat = request.POST.get("lat") #Eingabe aus html-form
         lon = request.POST.get("lon")
@@ -117,15 +112,16 @@ def check(request):
         stations = sort_by_dist(stations)
         cache.set("stations", stations, timeout=3600)
 
-        if(len(stations) == 0):#check ob leere Liste -> keine Treffer
+        if(len(stations) == 0):#check empty list -> no findings
             return render(request, 'index.html', {'result2': "Für diese Kombination von Koordinaten und Zeitraum gibt es nicht genügend Daten."})
         else:
             return render(request, 'index.html', {'result': stations, "inputs": inputs})
             
 
 def result(request):
-    #Aus der Userwahl wird die Stations-ID erhalten. Zurückgegeben werden Daten und Name der Station
-    #Die ID wird benötigt um Name und Daten der Station zu laden, die Jahreszahlen (years) werden aus dem chache geladen
+    #gets the station-choice from html form
+    #gets station-data from fetch_data()
+    #returns name and data to result.html
     if request.method == 'POST':
         id = request.POST.get("choice")
         name = get_name(id)
@@ -133,18 +129,18 @@ def result(request):
         res = fetch_data(id, years)
         cache.set("station_data", res, timeout=3600)
         cache.set("name",name, timeout=3600)
-        return render(request, 'result.html', {'result': res, 'name' : name}) #weiterleitung auf neue Seite
+        return render(request, 'result.html', {'result': res, 'name' : name})
 
-DATA_URL = "https://www1.ncdc.noaa.gov/pub/data/ghcn/daily/all/"    #Url zu der Liste aller Stationen
+DATA_URL = "https://www1.ncdc.noaa.gov/pub/data/ghcn/daily/all/"    #URL to station-data of all noaa-stations
 
 def fetch_data(station_id, years):
-    #Lädt die Wetterdaten einer Station von der noaa-Seite anhand der Stations-id und einer Liste der gewünschten Jahre
-    #Die ID wird verwendet um auf die entsprechende dly-Datei von nooa zugreifen zu können.
-    #Aus jeder Zeile der Daten werden Jahr, Monat, DatenTyp und die Tageswerte extrahiert
-    #Wenn das Jahr innerhalb des gewünschten Intervalls liegt und der DAtentyp TMIN oder TMAX ist, wird der DAtenliste Jahr, Datentyp, Jahreszeit(wird aus dem Monat berechnet), Tageswert hinzugefügt
-    #Danach werden Dictionaries benutzt um die Durchschnittswerte für TMIN und TMAX für das gesamte Jahr, sowie für die einzelnen Jahreszeiten zu berechnen.
-    #Diese Durchschnittswerte werden pro Jahr in einer bestimmten Reihenfolge in der avg_List gespeichert.
-    #Abschließend wird die avg_list zurückgegeben
+    #Downloads weather data from noaa using the id (station_id) to identify the correct staion
+    #years: list of years
+    #Extracts year, month, datatype, day-values of every lines
+    #if year and datatype matches the values get added. Values of december get added to the following year.
+    #-9999-values get removed (-9999 means day has no value)
+    #calculates means using dictionaries, saves means into avg_list in specific order
+    #returns avg_list
     station_id = str(station_id)
     url = f"{DATA_URL}{station_id}.dly"
     response = requests.get(url)
@@ -212,9 +208,8 @@ def fetch_data(station_id, years):
         return avg_list
     
 def get_season(month):
-    #Erhält einen Monat und gibt die entsprechende Jahreszeit zurück
-    #Durch Laden des Breitengrades (lat) wird bestimmt ob sich die Wetterstation auf der Nord- oder Südhalbkugel befindet. (positiv Nordhalbkugel; negativ Nordhalbkugel)
-    #Je nach Lage wird eine andere Jahreszeit zurückgegeben
+    #returns the season of the month
+    #different season depending on the latitude (lat) of the station
     lat = float(cache.get("lat",0))
     if lat >= 0:
         if month in [3, 4, 5]:
@@ -236,17 +231,17 @@ def get_season(month):
             return "Summer"
         
 def get_name(id):
-    #Die Stations-csv wird durchsucht, um Anhand der ID den Namen einer Wetterstation zurückzugeben 
+    #searches ghcnd-stations.csv and returns the name of station using the station-id(id)
     with open(os.path.join(settings.BASE_DIR, "data", "ghcnd-stations.csv"), mode='r', encoding='utf-8') as file:#Zugriff stations.csv
             reader = csv.reader(file)
             data = list(reader)
-            for i in range(1, 128025):
-                if data[i][0] == str(id):
-                    return data[i][5] 
+            for i in data:
+                if i[0] == str(id):
+                    return i[5] 
 
 def back(request):
-    #Wird genutzt wenn über den Button Dateninput zurück zu den Suchergebnissen gegangen wird. Dazu wird die Stationsliste aus dem Cache geladen
-    #Die vorherigen Eingabewerte (inputs) werden aus dem cache geladen, und wieder im html-form angezeigt
+    #Button "Dateninput"
+    #Loads and return inputs and list of stations in range from cache
     if request.method == "POST":
         stations = cache.get("stations",[])
         inputs = cache.get("inputs", [])
@@ -259,9 +254,8 @@ def back(request):
                 return render(request, 'index.html', {'result': stations, 'inputs': inputs})
 
 def back_data(request):
-    #Wird genutzt wenn User über den Button Wetterstationsdetails zurück zu den Daten der Wetterstation geht.
-    #Dazu werden Name und Daten (name, station_data) der Station aus dem cache geladen, um diese wieder anzeigen zu können
-    #Befinden sich keine Daten dazu im Cache, wurde noch keine Station geladen und es wird eine Aufforderung zuerst eine Station auszuwählen statt den Daten angezeigt 
+   #Button "Wetterstationsdetails"
+    #Loads stations-name and data, if station-data has previously been loaded, from cache 
     if request.method == "POST":
         station_data = cache.get("station_data", [])
         name = cache.get("name", "Bitte Station auswählen")
