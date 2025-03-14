@@ -6,9 +6,9 @@ class MyappConfig(AppConfig):
     name = 'myapp'
 
     def ready(self):
-        #Verhindert doppeltes Ausführen beim Start
+        
         if os.environ.get("RUN_MAIN") != "true":
-            return  # Beendet die Funktion beim zweiten Aufruf
-        #Startet Download der NOOA-DAten beim Start
+            return  #prevent multiple downloads during start
+        #automatic download during app start
         from .data_loader import download_stations
         download_stations()
