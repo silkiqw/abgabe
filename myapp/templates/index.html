@@ -233,7 +233,7 @@
         {% if result %}
     <h3 class="mb-3">Suchergebnisse ({{ result|length }} gefunden)</h3>
     
-    <!-- Anzahl der Einträge pro Seite Auswahl -->
+    <!-- Number of entries per site in pagination -->
     <div class="items-per-page-container">
         <label for="itemsPerPage">Einträge pro Seite:</label>
         <div class="btn-group" role="group" aria-label="Einträge pro Seite">
@@ -282,15 +282,15 @@
             document.getElementById("radiusValue").textContent = val;
         }
         
-        // Pagination Funktionen
+        // Pagination function
         document.addEventListener('DOMContentLoaded', function() {
             // Standardwert für Einträge pro Seite
             let itemsPerPage = 10;
             
-            // Pagination initialisieren, wenn Ergebnisse vorhanden sind
+            //initalize pagination if entries are loaded
             initPagination(itemsPerPage);
             
-            // Event-Listener für die Auswahl der Einträge pro Seite
+            // Event-Listener to choose entries per site
             const itemsPerPageButtons = document.querySelectorAll('.items-per-page-btn');
             if (itemsPerPageButtons.length > 0) {
                 itemsPerPageButtons.forEach(button => {
@@ -299,21 +299,21 @@
                         itemsPerPageButtons.forEach(btn => btn.classList.remove('active'));
                         this.classList.add('active');
                         
-                        // Wert aktualisieren
+                        // Update value
                         const value = this.getAttribute('data-value');
                         
                         if (value === 'all') {
-                            // Alle Ergebnisse anzeigen
+                            // show all entries
                             showAllResults();
                         } else {
-                            // Normale Pagination verwenden
+                            // use normal pagination
                             itemsPerPage = parseInt(value);
                             document.getElementById('itemsPerPageInput').value = itemsPerPage;
                             
-                            // Pagination-Container wieder anzeigen falls er versteckt war
+                            // show pagination container if it was hidden before
                             document.getElementById('paginationContainer').style.display = 'flex';
                             
-                            // Pagination neu initialisieren
+                            //initialize pagination again
                             initPagination(itemsPerPage);
                         }
                     });
@@ -328,7 +328,7 @@
             const resultItems = resultsList.querySelectorAll('.result-item');
             if (resultItems.length === 0) return;
             
-            // Alle Ergebnisse anzeigen
+            // show all entries
             resultItems.forEach(item => {
                 item.style.display = 'block';
             });
@@ -353,7 +353,7 @@
             const pagination = document.getElementById('pagination');
             pagination.innerHTML = '';
             
-            // Erste Seite und Zurück-Buttons
+            // first site and back buttons
             pagination.appendChild(createPaginationItem('«', 'previous', 1));
             
             // Seitenzahlen
@@ -361,10 +361,10 @@
                 pagination.appendChild(createPaginationItem(i, i === 1 ? 'active' : '', i));
             }
             
-            // Nächste und Letzte Seite Buttons
+            // next and last-site buttons
             pagination.appendChild(createPaginationItem('»', 'next', Math.min(2, totalPages)));
             
-            // Ergebnisse für Seite 1 anzeigen
+            // show entries for the first site
             showPage(1, resultItems, itemsPerPage);
         }
         
@@ -391,20 +391,20 @@
             const resultItems = resultsList.querySelectorAll('.result-item');
             const totalPages = Math.ceil(resultItems.length / itemsPerPage);
             
-            // Überprüfe gültige Seitenzahl
+            // check Pagenumber
             if (pageNum < 1) pageNum = 1;
             if (pageNum > totalPages) pageNum = totalPages;
             
-            // Update aktueller Seitenzähler
+            // Update current page counter
             document.getElementById('currentPage').value = pageNum;
             
-            // Update Pagination aktiver Status
+            // Update Pagination to active  state
             const paginationItems = document.querySelectorAll('#pagination .page-item');
             paginationItems.forEach(item => {
                 item.classList.remove('active');
             });
             
-            // Setze aktive Seite
+            // Set aktive site
             const activePageItem = document.querySelector(`#pagination .page-item:nth-child(${pageNum + 1})`);
             if (activePageItem) {
                 activePageItem.classList.add('active');
@@ -423,25 +423,25 @@
                 handlePagination(pageNum + 1, itemsPerPage);
             });
             
-            // Deaktiviere Previous/Next wenn am Anfang/Ende
+            // Disable Previous/Next when at the beginning/end
             prevButton.classList.toggle('disabled', pageNum === 1);
             nextButton.classList.toggle('disabled', pageNum === totalPages);
             
-            // Zeige Ergebnisse für aktuelle Seite
+            // Show results for current page
             showPage(pageNum, resultItems, itemsPerPage);
         }
         
         function showPage(pageNum, resultItems, itemsPerPage) {
-            // Alle Einträge verstecken
+            // Hide all entries
             resultItems.forEach(item => {
                 item.style.display = 'none';
             });
             
-            // Berechne Startindex
+            // Calculate Startindex
             const startIndex = (pageNum - 1) * itemsPerPage;
             const endIndex = Math.min(startIndex + itemsPerPage, resultItems.length);
             
-            // Zeige Einträge für aktuelle Seite
+            // Show entries for current page
             for (let i = startIndex; i < endIndex; i++) {
                 resultItems[i].style.display = 'block';
             }
@@ -471,19 +471,19 @@
             
             if (!yearFrom || !yearTo) return;
             
-            // Setze max-Attribute für die Jahresbereiche
-            // Keine Untergrenze mehr für yearFrom
+            // // Set max attributes for the year ranges
+            
             const maxYear = 2024;
             
             // Event-Listener für das Von-Jahr
             yearFrom.addEventListener('change', function() {
-                // Nur noch Überprüfung der oberen Grenze
+                // Check of upper limit
                 if (this.value > maxYear) {
                     alert('Das Jahr darf nicht nach 2024 liegen.');
                     this.value = maxYear;
                 }
                 
-                // Wenn das Bis-Jahr vor dem Von-Jahr liegt, korrigiere es
+                // If the to-year is before the from-year, correct it
                 if (yearTo.value && parseInt(yearTo.value) < parseInt(this.value)) {
                     alert('Das Bis-Jahr darf nicht vor dem Von-Jahr liegen.');
                     yearTo.value = this.value;
@@ -492,13 +492,13 @@
             
             // Event-Listener für das Bis-Jahr
             yearTo.addEventListener('change', function() {
-                // Nur noch Überprüfung der oberen Grenze für das Bis-Jahr
+                // review of the upper limit for the up-to-year
                 if (this.value > maxYear) {
                     alert('Das Jahr darf nicht nach 2024 liegen.');
                     this.value = maxYear;
                 }
                 
-                // Wenn das Bis-Jahr vor dem Von-Jahr liegt, korrigiere es
+                // If the to-year is before the from-year, correct it
                 if (yearFrom.value && parseInt(this.value) < parseInt(yearFrom.value)) {
                     alert('Das Bis-Jahr darf nicht vor dem Von-Jahr liegen.');
                     this.value = yearFrom.value;
@@ -520,7 +520,7 @@
                 return false;
             }
             
-            // Prüfe nur noch die obere Grenze
+            //  check the upper limit
             const maxYear = 2024;
             
             if (yearFrom.value > maxYear) {
@@ -535,15 +535,15 @@
                 return false;
             }
             
-            // Prüfe, ob das Bis-Jahr nach dem Von-Jahr liegt
+            // Check if the to year is after the from year
             if (parseInt(yearTo.value) < parseInt(yearFrom.value)) {
                 alert('Das Bis-Jahr darf nicht vor dem Von-Jahr liegen.');
                 event.preventDefault();
                 return false;
             }
             
-            // Wenn alle Validierungen erfolgreich sind, konvertiere die Jahre in Datumswerte
-            // für die Backend-Verarbeitung
+            // If all validations are successful, convert the years to dates
+            // for backend processing
             const hiddenDateFrom = document.createElement('input');
             hiddenDateFrom.type = 'hidden';
             hiddenDateFrom.name = 'dateFrom';
@@ -560,7 +560,7 @@
         }
         
         document.addEventListener('DOMContentLoaded', function() {
-            // Initialisiere die Jahresvalidierung
+            // Initialize the annual validation
             validateYearInputs();
             
             const form = document.querySelector('form[action*="check"]');
