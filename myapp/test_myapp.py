@@ -38,7 +38,7 @@ def test_docker_resource_limits():
     image_name = "ghcr.io/silkiqw/django-wetter-app:latest"
 
     try:
-        # Starte den Container mit den Limits
+         # Start the container with limits
         subprocess.run(
             [
                 "docker", "run", "-d", "--name", container_name,
@@ -48,10 +48,10 @@ def test_docker_resource_limits():
             check=True
         )
 
-        # Warte einige Sekunden, damit der Container sich stabilisiert
+        # Wait a few seconds for the container to stabilize
         time.sleep(10)
 
-        # Führe docker stats aus
+       # Run docker stats
         result = subprocess.run(
             ["docker", "stats", "--no-stream", "--format", "{{.MemUsage}} {{.CPUPerc}}", container_name],
             capture_output=True, text=True, check=False
@@ -59,7 +59,7 @@ def test_docker_resource_limits():
 
         output = result.stdout.strip()
 
-        # Falls `output` leer ist, Fehler werfen
+       # If `output` is empty, raise an error
         if not output:
             raise RuntimeError("Fehler: `docker stats` hat keine Werte zurückgegeben!")
 
@@ -68,20 +68,20 @@ def test_docker_resource_limits():
         if len(values) < 4:
             raise ValueError(f"Unerwartete `docker stats` Ausgabe: {output}")
 
-        # Speicherverbrauch extrahieren (immer erstes Element)
+        # Extract memory usage (always the first element)
         mem_usage = values[0]
 
-        # CPU-Auslastung ist das letzte Element
+       # CPU usage is the last element
         cpu_perc = values[-1]
 
-        # Prüfen, ob `cpu_perc` tatsächlich eine Zahl ist
+        # Check if `cpu_perc` is actually a number
         if not cpu_perc.replace(".", "").replace("%", "").isdigit():
             raise ValueError(f"CPU-Wert ungültig: {cpu_perc} (Output: {output})")
 
         cpu_usage = float(cpu_perc.replace("%", ""))
         assert cpu_usage <= 200.0, f"CPU-Verbrauch überschreitet 2 vCPUs! (Aktuell: {cpu_usage}%)"
 
-        # RAM-Wert mit Regex extrahieren (z. B. "512MiB" oder "1.2GiB")
+        # Extract RAM value with regex (e.g. "512MiB" or "1.2GiB")
         match = re.match(r"([\d.]+)(MiB|GiB)", mem_usage)
         if not match:
             raise ValueError(f"RAM-Wert ungültig: {mem_usage} (Output: {output})")
@@ -92,45 +92,45 @@ def test_docker_resource_limits():
         assert mem_used < 1024, f"RAM-Verbrauch überschreitet 1 GB! (Aktuell: {mem_used} MiB)"
 
     finally:
-        # Container stoppen und entfernen
+       # Stop and remove container
         subprocess.run(["docker", "stop", container_name], check=False)
         subprocess.run(["docker", "rm", container_name], check=False)
     
 
 
 @pytest.mark.parametrize("lat1, lon1, lat2, lon2, expected", [
-    (48.1351, 11.5820, 48.1351, 11.5820, 0.0),  # Gleicher Punkt → Distanz = 0
-    (48.1351, 11.5820, 48.1360, 11.5820, 0.1),  # Ca. 0.1 km nach Norden
-    (48.1351, 11.5820, 49.0000, 12.0000, 100.0) # Entfernung ca. 100 km
+    (48.1351, 11.5820, 48.1351, 11.5820, 0.0),  # Same point → Distance = 0
+    (48.1351, 11.5820, 48.1360, 11.5820, 0.1),  # Approx. 0.1 km north
+    (48.1351, 11.5820, 49.0000, 12.0000, 100.0) # Distance approx. 100 km
 ])
 def test_distance(lat1, lon1, lat2, lon2, expected):
     result = distance(lat1, lon1, lat2, lon2)
-    assert pytest.approx(result, rel=1e-2) == expected # Toleranz ±1%
+    assert pytest.approx(result, rel=1e-2) == expected # Tolerance ±1%
 
 @pytest.mark.parametrize("lat1, lon1, lat2, lon2, expected", [
-    (50.0000, 8.0000, 50.1000, 8.0000, True),  # Etwa 11 km → innerhalb 50 km
-    (50.0000, 8.0000, 55.0000, 13.0000, False)  # Mehrere hundert km → außerhalb 50 km
+    (50.0000, 8.0000, 50.1000, 8.0000, True),  # About 11 km → within 50 km
+    (50.0000, 8.0000, 55.0000, 13.0000, False)  # Several hundred km → outside 50 km
 ])
 def test_is_within_rad(lat1, lon1, lat2, lon2, expected):
-    # Test für is_within_rad innerhalb Radius
+    # Test for is_within_rad within radius
     assert is_within_rad(lat1, lon1, lat2, lon2, 50) == expected
 
 def test_is_within_radius():
-    # Test for is_within_rad innerhalb Radius
+    # Test for is_within_rad within radius
     assert is_within_rad(50.0, 10.0, 50.1, 10.1, 15) == True
 
 def test_is_outside_radius():
-    # Test for is_within_rad außerhalb Radius
+    # Test for is_within_rad outside radius
     assert is_within_rad(50.0, 10.0, 60.0, 20.0, 100) == False
 
 def test_filter_duplicates():
-    # Test für filter_duplicates mit Duplikaten
+     # Test filter_duplicates with duplicates
     input_list = [1, 2, 2, 3, 4, 4, 4]
     expected_output = [2, 2, 4, 4, 4]
     assert filter_duplicates(input_list) == expected_output
 
 def test_filter_no_duplicates():
-    # Test für filter_duplicates ohne Duplikate
+    # Test filter_duplicates without duplicates
     input_list = [1, 2, 3]
     expected_output = []
     assert filter_duplicates(input_list) == expected_output
@@ -138,20 +138,20 @@ def test_filter_no_duplicates():
 
 @patch("myapp.views.get_name", side_effect=lambda x: f"Station {x}")
 def test_get_names(mock_get_name):
-    # Test für get_names
+    # Test for get_names
     input_list = [["1"], ["2"], ["3"]]
     expected_output = [["1", "Station 1"], ["2", "Station 2"], ["3", "Station 3"]]
     assert get_names(input_list) == expected_output
 
 @patch("builtins.open", new_callable=mock_open, read_data="ID1 50.0 10.0 TMAX 2000 2020\nID2 60.0 20.0 TMIN 2001 2021")
 def test_read_stations(mock_file):
-    # Test für read_stations
+   # Test for read_stations
     expected_output = "ID1 50.0 10.0 TMAX 2000 2020\nID2 60.0 20.0 TMIN 2001 2021"
     assert read_stations() == expected_output
 
 @patch("builtins.open", side_effect=Exception("Fehler beim Lesen der Datei"))
 def test_read_stations_error(mock_file):
-    # Test für read_stations mit Fehler
+    # Test for read_stations with error
     assert read_stations() == []
 
 @patch("myapp.views.render", return_value=HttpResponse())
@@ -165,7 +165,7 @@ def test_read_stations_error(mock_file):
 @patch("myapp.views.get_names", return_value=[["ID1", "TestStation"]])
 def test_check_within_radius(mock_get_names, mock_remove_duplicates, mock_filter_duplicates,
                            mock_is_within_rad, mock_read_stations, mock_render):
-    # Test für check innerhalb Radius
+    # Test for check within radius
     factory = RequestFactory()
     request = factory.post("/check", {
         "lat": "50.0",
@@ -190,7 +190,7 @@ def test_check_outside_radius(mock_is_within_rad, mock_read_stations, mock_rende
     # Configure mock_render to return a response with context
     mock_render.return_value.context = {'result2': "Für diese Kombination von Koordinaten und Zeitraum gibt es nicht genügend Daten."}
     
-    # Test für check außerhalb Radius
+    # Test for check outside radius
     factory = RequestFactory()
     request = factory.post("/check", {
         "lat": "50.0",
@@ -211,7 +211,7 @@ def test_check_outside_radius(mock_is_within_rad, mock_read_stations, mock_rende
 @patch("requests.get")
 @patch("myapp.views.get_season", return_value="Spring")
 def test_fetch_data(mock_get_season, mock_get):
-    # Simuliere eine erfolgreiche HTTP-Antwort
+    # Simulate a successful HTTP response
     mock_get.return_value.status_code = 200
 
     # Mock data in the correct NOAA GHCN daily format
@@ -268,7 +268,7 @@ USW0009472820200112TMIN  200  194  183  178  178  183  194  194  194  194  194  
 
 @patch("requests.get")
 def test_fetch_data_error(mock_get):
-    # Test für fetch_data mit Fehler
+    # Test für fetch_data with errors
     mock_get.return_value.status_code = 404
     try:
         fetch_data("ID1", [2020])
@@ -277,7 +277,7 @@ def test_fetch_data_error(mock_get):
         assert True
 
 def test_get_season_northern_hemisphere():
-    # Test für get_season (Nordhalbkugel)
+    # Test for get_season (Nordhalbkugel)
     assert get_season(3) == "Spring"
     assert get_season(6) == "Summer"
     assert get_season(9) == "Fall"
@@ -285,7 +285,7 @@ def test_get_season_northern_hemisphere():
 
 @patch("django.core.cache.cache.get", return_value=-50.0)
 def test_get_season_southern_hemisphere(mock_cache_get):
-    # Test für get_season (Südhalbkugel)
+    # Test for get_season (Südhalbkugel)
     assert get_season(3) == "Fall"
     assert get_season(6) == "Winter"
     assert get_season(9) == "Spring"
@@ -295,7 +295,7 @@ def test_get_season_southern_hemisphere(mock_cache_get):
 @patch("myapp.views.range", return_value=[1])
 @patch("csv.reader")
 def test_get_name(mock_reader, mock_range, mock_file):
-    # Konfiguriere den CSV-Reader-Mock
+    # Configuring the CSV-Reader-Mock
     mock_reader.return_value = [
         ["ID", "Field1", "Field2", "Field3", "Field4", "Name"],
         ["ID1", "Field1", "Field2", "Field3", "Field4", "Name1"]
@@ -305,7 +305,7 @@ def test_get_name(mock_reader, mock_range, mock_file):
 
 @patch("builtins.open", side_effect=Exception("Fehler beim Lesen der Datei"))
 def test_get_name_error(mock_file):
-    # Test für get_name mit Fehler
+    # Test for get_name mit Fehler
     with pytest.raises(Exception):
         get_name("ID1")
 
