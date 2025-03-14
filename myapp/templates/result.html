@@ -93,6 +93,9 @@
                     <h2 class="mb-4">Aufgerufene Wetterstation Details</h2>
                 </div>
             </div>
+            {% if err %}
+            <h3> {{ err }} </h3>
+            {% endif %}
             {% if name %}
             <h3> Wetterstation: {{ name }} </h3>
             {% endif %}
