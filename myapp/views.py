@@ -10,12 +10,7 @@ from django.conf import settings
 from django.core.cache import cache
 
 def index(request):   
-    if read_stations():
-        return render(request, "index.html", {"result": None})
-    else:
-        return render(request, "index.html", {"result": None, "err": "Keine Verbindung zum Server. Anwendung beenden und später neu starten"})
-
-    
+    return render(request, "index.html", {"result": None})
 
 def distance(lat1, lon1, lat2, lon2):
     #calculates the distance of 2 sets of coordinates (lat1, lon1 and lat2, lon2) using Haversine
