@@ -187,36 +187,36 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
     <script>
-        // Chart.js Konfiguration
+        
         // Chart.js Konfiguration
 document.addEventListener('DOMContentLoaded', function() {
-    // Daten aus der Tabelle auslesen
+    // Read data from table
     const table = document.querySelector('.table');
     const rows = Array.from(table.querySelectorAll('tbody tr'));
     
-    // Jahre aus der Tabelle extrahieren
+    // extract years from table
     const yearsFromTable = rows.map(row => parseInt(row.cells[0].textContent));
     
-    // Min und Max Jahr bestimmen
+    // determine Min and Max year
     const minYear = Math.min(...yearsFromTable);
     const maxYear = Math.max(...yearsFromTable);
     
-    // Vollständige Jahresreihe erstellen
+    // Create a complete annual series
     const completeYears = [];
     for (let year = minYear; year <= maxYear; year++) {
         completeYears.push(year);
     }
     
-    // Funktion zum Abrufen von Daten für ein bestimmtes Jahr oder NaN, wenn keine Daten existieren
+    // Function to retrieve data for a specific year or NaN if no data exists
     function getValueForYear(year, dataIndex) {
         const rowIndex = yearsFromTable.indexOf(year);
         if (rowIndex === -1) {
-            return NaN; // Kein Wert für dieses Jahr vorhanden
+            return NaN; // No value available for this year
         }
         return parseFloat(rows[rowIndex].cells[dataIndex].textContent);
     }
     
-    // Daten für alle Jahre erzeugen, mit NaN für fehlende Jahre
+    // Generate data for all years, with NaN for missing years
     const minTemp = completeYears.map(year => getValueForYear(year, 1));
     const maxTemp = completeYears.map(year => getValueForYear(year, 2));
     const minSpring = completeYears.map(year => getValueForYear(year, 3));
@@ -333,10 +333,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     ];
     
-    // Alle Datasets kopieren, um mit den Originalwerten zu arbeiten
+    // Copy all datasets to work with the original values
     const allDatasets = JSON.parse(JSON.stringify(datasets));
 
-    // Chart erstellen
+    // create Chart 
     const chart = new Chart(ctx, {
         type: 'line',
         data: {
@@ -377,26 +377,26 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Funktionalität für Hervorheben der Serien
+    // Functionality for highlighting series
     document.querySelectorAll('.series-toggle').forEach(button => {
         button.addEventListener('click', () => {
             const series = button.getAttribute('data-series');
             
-            // Alle Buttons zurücksetzen
+            // Reset all buttons
             document.querySelectorAll('.series-toggle').forEach(btn => {
                 btn.classList.remove('btn-primary');
                 btn.classList.add('btn-outline-secondary');
             });
             
-            // Geklickten Button aktivieren
+            // Activate clicked button
             button.classList.remove('btn-outline-secondary');
             button.classList.add('btn-primary');
             
             if (series === 'alles') {
-                // Alle Datensätze anzeigen
+                // Show all records
                 chart.data.datasets = JSON.parse(JSON.stringify(allDatasets));
             } else {
-                // Nur die ausgewählten Datensätze anzeigen
+                // Show only selected records
                 chart.data.datasets = JSON.parse(JSON.stringify(allDatasets)).filter(
                     dataset => dataset.group === series
                 );
@@ -406,7 +406,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Standardmäßig alle Serien anzeigen
+    // Show all series by default
     document.querySelector('.series-toggle[data-series="alles"]').click();
 });
     </script>
