@@ -10,7 +10,11 @@ from django.conf import settings
 from django.core.cache import cache
 
 def index(request):   
-    return render(request, "index.html", {"result": None})
+    if read_stations():
+        return render(request, "index.html", {"result": None})
+    else:
+        return render(request, "index.html", {"result": None, "err": "Keine Verbindung zum Server. Anwendung beenden und später neu starten"})
+
     
 
 def distance(lat1, lon1, lat2, lon2):
@@ -127,6 +131,8 @@ def result(request):
         name = get_name(id)
         years = cache.get("years",[2024])
         res = fetch_data(id, years)
+        if res == "error":
+            return render(request, 'result.html', {'err': 'Keine Verbindung zum Server. Später noch einmal versuchen.'})
         cache.set("station_data", res, timeout=3600)
         cache.set("name",name, timeout=3600)
         return render(request, 'result.html', {'result': res, 'name' : name})
@@ -142,10 +148,11 @@ def fetch_data(station_id, years):
     #calculates means using dictionaries, saves means into avg_list in specific order
     #returns avg_list
     station_id = str(station_id)
-    url = f"{DATA_URL}{station_id}.dly"
-    response = requests.get(url)
-    if response.status_code != 200:
-        raise Exception("Fehler beim Abrufen der Wetterdaten")
+    try:
+        url = f"{DATA_URL}{station_id}.dly"
+        response = requests.get(url)
+    except:
+        return "error"
     records = []
     for year in years:
         lines = response.text.split("\n")
